@@ -18,7 +18,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version> </version>
         </dependency>
 
         <!-- The starter wires up all Agentic Docs beans automatically -->
@@ -28,13 +27,46 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Springdoc: provides @Operation annotations + Swagger UI at /swagger-ui.html -->
+        <!-- Springdoc: @Operation annotations + Swagger UI at /swagger-ui.html -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
     </dependencies>
+
+    <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║  TO SWITCH PROVIDERS — change spring.profiles.active in         ║
+    ║  application.properties, then rebuild with the matching flag:   ║
+    ║                                                                  ║
+    ║  OpenAI (default):  mvn clean package                           ║
+    ║                     mvn clean package -P openai                  ║
+    ║                                                                  ║
+    ║  Ollama (local):    mvn clean package -P ollama                  ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    -->
+    <profiles>
+
+        <!-- ── PROFILE: openai (DEFAULT) ─────────────────────────────── -->
+        <profile>
+            <id>openai</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <!-- No extra deps needed — starter's openai profile handles it -->
+        </profile>
+
+        <!-- ── PROFILE: ollama ────────────────────────────────────────── -->
+        <profile>
+            <id>ollama</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <!-- No extra deps needed — starter's ollama profile handles it -->
+        </profile>
+
+    </profiles>
 
     <build>
         <plugins>

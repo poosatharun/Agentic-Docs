@@ -28,16 +28,59 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- OpenAI: ChatModel + EmbeddingModel auto-configured by Spring AI -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- In-memory vector store — zero external infrastructure -->
+        <!-- In-memory vector store — used by both providers -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-simple-vector-store</artifactId>
         </dependency>
     </dependencies>
+
+    <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║  LLM PROVIDER PROFILES                                          ║
+    ║                                                                  ║
+    ║  Build with OpenAI (default):                                    ║
+    ║    mvn clean install                                             ║
+    ║    mvn clean install -P openai                                   ║
+    ║                                                                  ║
+    ║  Build with Ollama (free, local):                                ║
+    ║    mvn clean install -P ollama                                   ║
+    ║                                                                  ║
+    ║  Then activate the matching Spring profile at runtime:           ║
+    ║    OpenAI : --spring.profiles.active=openai                      ║
+    ║    Ollama : --spring.profiles.active=ollama                      ║
+    ╚══════════════════════════════════════════════════════════════════╝
+    -->
+    <profiles>
+
+        <!-- ── PROFILE: openai (DEFAULT) ─────────────────────────────── -->
+        <profile>
+            <id>openai</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.ai</groupId>
+                    <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <!-- ── PROFILE: ollama (free, local) ─────────────────────────── -->
+        <profile>
+            <id>ollama</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.ai</groupId>
+                    <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+
+    </profiles>
+
 </project>

@@ -1,23 +1,37 @@
 # 05 — Configuration Reference
 
-## All Supported Properties
+## Overview
 
-### Agentic Docs Properties
+Agentic Docs supports two LLM providers out of the box:
 
-| Property | Type | Default | Required | Description |
-|---|---|---|---|---|
-| `agentic.docs.enabled` | `boolean` | `false` | **Yes** | Master switch. Must be `true` to activate the starter. |
-
-### OpenAI Properties (via Spring AI)
-
-| Property | Type | Default | Description |
+| Provider | Mode | Cost | Requires |
 |---|---|---|---|
-| `spring.ai.openai.api-key` | `String` | — | Your OpenAI API key. Use env var `SPRING_AI_OPENAI_API_KEY`. |
-| `spring.ai.openai.chat.options.model` | `String` | `gpt-4o` | Chat model. Recommended: `gpt-4o-mini` for cost efficiency. |
-| `spring.ai.openai.embedding.options.model` | `String` | `text-embedding-ada-002` | Embedding model. Recommended: `text-embedding-3-small`. |
-| `spring.ai.openai.base-url` | `String` | `https://api.openai.com` | Override for Azure OpenAI or local proxies. |
+| **OpenAI** | Cloud (online) | ~$0.01/session | API key + internet |
+| **Ollama** | Local (offline) | Free | Ollama installed + GPU/CPU |
 
-### Recommended `application.properties`
+Switching between them is a **two-step process**:
+1. Change one line in `application.properties`
+2. Rebuild with the matching Maven profile flag
+
+See [10-switching-llm-providers.md](./10-switching-llm-providers.md) for the full step-by-step guide.
+
+---
+
+## File Layout
+
+```
+agentic-docs-sample-app/src/main/resources/
+├── application.properties          ← Shared settings + active profile selector
+├── application-openai.properties   ← OpenAI-specific config (cloud)
+└── application-ollama.properties   ← Ollama-specific config (local/offline)
+```
+
+Spring Boot automatically loads `application-{profile}.properties` when
+`spring.profiles.active={profile}` is set in `application.properties`.
+
+---
+
+## `application.properties` — Shared Settings
 
 ```properties
 server.port=8080
@@ -25,136 +39,114 @@ server.port=8080
 # ── Agentic Docs ──────────────────────────────────────────────────────────────
 agentic.docs.enabled=true
 
-# ── OpenAI ────────────────────────────────────────────────────────────────────
-spring.ai.openai.api-key=${SPRING_AI_OPENAI_API_KEY}
-spring.ai.openai.chat.options.model=gpt-4o-mini
-spring.ai.openai.embedding.options.model=text-embedding-3-small
+# ── Active LLM Profile ────────────────────────────────────────────────────────
+# Change this value to switch providers:
+#   openai  → cloud, paid, needs SPRING_AI_OPENAI_API_KEY
+#   ollama  → local, free, needs Ollama running on localhost:11434
+spring.profiles.active=openai
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.level.com.agentic.docs=INFO
 ```
 
----
+### Agentic Docs Properties
 
-## Environment-Specific Configuration
-
-### Enable only in development
-
-```properties
-# application.properties (production — Agentic Docs OFF)
-agentic.docs.enabled=false
-
-# application-dev.properties (development — Agentic Docs ON)
-agentic.docs.enabled=true
-spring.ai.openai.api-key=${SPRING_AI_OPENAI_API_KEY}
-```
-
-Activate with: `--spring.profiles.active=dev`
-
-### Docker / Kubernetes
-
-```yaml
-# docker-compose.yml
-environment:
-  - SPRING_AI_OPENAI_API_KEY=sk-...
-  - AGENTIC_DOCS_ENABLED=true
-```
-
-Spring Boot automatically maps `AGENTIC_DOCS_ENABLED` → `agentic.docs.enabled` via relaxed binding.
+| Property | Type | Default | Required | Description |
+|---|---|---|---|---|
+| `agentic.docs.enabled` | `boolean` | `false` | **Yes** | Master on/off switch for the starter |
+| `spring.profiles.active` | `string` | — | **Yes** | Set to `openai` or `ollama` |
 
 ---
 
-## Swapping the LLM Provider
+## `application-openai.properties` — OpenAI Provider
 
-The starter defaults to OpenAI, but Spring AI supports many providers. Swapping requires:
-1. Removing the OpenAI starter from the host app's POM
-2. Adding the desired provider's starter
-3. Updating properties
-
-### Azure OpenAI
-
-```xml
-<!-- pom.xml -->
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-azure-openai-spring-boot-starter</artifactId>
-</dependency>
-```
+Loaded automatically when `spring.profiles.active=openai`.
 
 ```properties
-spring.ai.azure.openai.api-key=${AZURE_OPENAI_API_KEY}
-spring.ai.azure.openai.endpoint=https://your-resource.openai.azure.com/
-spring.ai.azure.openai.chat.options.deployment-name=gpt-4o-mini
-spring.ai.azure.openai.embedding.options.deployment-name=text-embedding-3-small
+spring.ai.openai.api-key=${SPRING_AI_OPENAI_API_KEY:your-openai-api-key-here}
+spring.ai.openai.chat.options.model=gpt-4o-mini
+spring.ai.openai.embedding.options.model=text-embedding-3-small
 ```
 
-### Ollama (Local, Free)
+### OpenAI Properties
 
-```xml
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
-</dependency>
-```
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `spring.ai.openai.api-key` | `String` | — | API key. Use env var `SPRING_AI_OPENAI_API_KEY` |
+| `spring.ai.openai.chat.options.model` | `String` | `gpt-4o` | Chat model name |
+| `spring.ai.openai.embedding.options.model` | `String` | `text-embedding-ada-002` | Embedding model name |
+| `spring.ai.openai.base-url` | `String` | `https://api.openai.com` | Override for Azure or proxies |
+
+### Recommended OpenAI Models
+
+| Use Case | Model | Notes |
+|---|---|---|
+| Best quality | `gpt-4o` | Slower, more expensive |
+| Best value ✓ | `gpt-4o-mini` | Recommended default |
+| Embeddings ✓ | `text-embedding-3-small` | Recommended default |
+| Embeddings (high quality) | `text-embedding-3-large` | 3× more expensive |
+
+---
+
+## `application-ollama.properties` — Ollama Provider
+
+Loaded automatically when `spring.profiles.active=ollama`.
 
 ```properties
 spring.ai.ollama.base-url=http://localhost:11434
 spring.ai.ollama.chat.options.model=llama3.2
 spring.ai.ollama.embedding.options.model=nomic-embed-text
+spring.ai.ollama.chat.options.keep-alive=5m
 ```
 
-Run Ollama locally: `ollama pull llama3.2 && ollama pull nomic-embed-text`
+### Ollama Properties
 
-### Anthropic Claude
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `spring.ai.ollama.base-url` | `String` | `http://localhost:11434` | Ollama server URL |
+| `spring.ai.ollama.chat.options.model` | `String` | — | Chat model name (must be pulled first) |
+| `spring.ai.ollama.embedding.options.model` | `String` | — | Embedding model name (must be pulled first) |
+| `spring.ai.ollama.chat.options.keep-alive` | `String` | `5m` | How long to keep model loaded in memory |
 
-```xml
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-anthropic-spring-boot-starter</artifactId>
-</dependency>
-```
+### Recommended Ollama Models
 
-```properties
-spring.ai.anthropic.api-key=${ANTHROPIC_API_KEY}
-spring.ai.anthropic.chat.options.model=claude-3-5-haiku-20241022
-```
-
-Note: Anthropic does not provide an embedding model. You would need to keep the OpenAI embedding dependency alongside the Anthropic chat dependency.
+| Use Case | Model | RAM Required | Pull Command |
+|---|---|---|---|
+| Chat (small, fast) ✓ | `llama3.2` | ~2 GB | `ollama pull llama3.2` |
+| Chat (better quality) | `llama3.1:8b` | ~5 GB | `ollama pull llama3.1:8b` |
+| Chat (best quality) | `llama3.3:70b` | ~40 GB | `ollama pull llama3.3:70b` |
+| Embeddings ✓ | `nomic-embed-text` | ~274 MB | `ollama pull nomic-embed-text` |
+| Embeddings (alternative) | `mxbai-embed-large` | ~670 MB | `ollama pull mxbai-embed-large` |
 
 ---
 
-## Swapping the Vector Store
+## Environment Variables
 
-To use a persistent vector store instead of the in-memory `SimpleVectorStore`:
+| Variable | Used by | Description |
+|---|---|---|
+| `SPRING_AI_OPENAI_API_KEY` | OpenAI profile | Your OpenAI secret key (`sk-...`) |
+| `SPRING_PROFILES_ACTIVE` | Both | Override active profile without editing files |
 
-### PostgreSQL + pgvector
+### Setting environment variables
 
-```xml
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
-</dependency>
+**Windows CMD:**
+```cmd
+set SPRING_AI_OPENAI_API_KEY=sk-your-key-here
 ```
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/mydb
-spring.datasource.username=postgres
-spring.datasource.password=secret
-spring.ai.vectorstore.pgvector.initialize-schema=true
+**Windows PowerShell:**
+```powershell
+$env:SPRING_AI_OPENAI_API_KEY = "sk-your-key-here"
 ```
 
-Remove the `spring-ai-simple-vector-store` dependency from the starter POM and add the pgvector one. The `VectorStore` bean in `VectorStoreConfig` will be replaced by the pgvector auto-configuration.
-
-### Pinecone
-
-```xml
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-pinecone-store-spring-boot-starter</artifactId>
-</dependency>
+**macOS / Linux:**
+```bash
+export SPRING_AI_OPENAI_API_KEY=sk-your-key-here
 ```
 
-```properties
-spring.ai.vectorstore.pinecone.api-key=${PINECONE_API_KEY}
-spring.ai.vectorstore.pinecone.index-name=agentic-docs
+**Docker Compose:**
+```yaml
+environment:
+  - SPRING_AI_OPENAI_API_KEY=sk-your-key-here
+  - SPRING_PROFILES_ACTIVE=openai
 ```
