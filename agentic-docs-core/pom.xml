@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.agentic.docs</groupId>
         <artifactId>agentic-docs-parent</artifactId>
@@ -11,23 +12,28 @@
 
     <artifactId>agentic-docs-core</artifactId>
     <packaging>jar</packaging>
+    <name>Agentic Docs Core</name>
 
     <dependencies>
+        <!-- Spring Web MVC — provided by the host app -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <scope>provided</scope> </dependency>
-        
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Spring AI: ChatClient, VectorStore, EmbeddingModel, Document -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
         </dependency>
 
+        <!-- Optional: read @Operation summaries if springdoc is on classpath -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
-            <version>2.2.20</version>
-            <scope>provided</scope>
+            <version>${swagger-annotations.version}</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 </project>

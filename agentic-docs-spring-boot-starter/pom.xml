@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.agentic.docs</groupId>
         <artifactId>agentic-docs-parent</artifactId>
@@ -11,17 +12,32 @@
 
     <artifactId>agentic-docs-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
+    <name>Agentic Docs Spring Boot Starter</name>
 
     <dependencies>
+        <!-- AutoConfiguration support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
-        
+
+        <!-- Core scanning + chat logic -->
         <dependency>
             <groupId>com.agentic.docs</groupId>
             <artifactId>agentic-docs-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <!-- OpenAI: ChatModel + EmbeddingModel auto-configured by Spring AI -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- In-memory vector store — zero external infrastructure -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-simple-vector-store</artifactId>
         </dependency>
     </dependencies>
 </project>

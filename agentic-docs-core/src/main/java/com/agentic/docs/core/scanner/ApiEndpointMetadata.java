@@ -1,8 +1,8 @@
 package com.agentic.docs.core.scanner;
 
 /**
- * DTO to hold the extracted API details.
- * This will be converted into a Spring AI Document for vectorization.
+ * Immutable DTO representing a single REST endpoint discovered in the host application.
+ * The {@link #toLlmReadableText()} method produces the text that gets embedded into the vector store.
  */
 public record ApiEndpointMetadata(
         String path,
@@ -12,15 +12,14 @@ public record ApiEndpointMetadata(
         String description
 ) {
     /**
-     * Converts the metadata into a plain text string suitable for an LLM to read.
+     * Produces a structured plain-text representation suitable for LLM context injection.
      */
     public String toLlmReadableText() {
-        return String.format(
-            "API Endpoint: [%s] %s\n" +
-            "Controller: %s\n" +
-            "Java Method: %s\n" +
-            "Description: %s\n",
-            httpMethod, path, controllerName, methodName, description
-        );
+        return """
+                Endpoint  : [%s] %s
+                Controller: %s
+                Method    : %s
+                Summary   : %s
+                """.formatted(httpMethod, path, controllerName, methodName, description);
     }
 }

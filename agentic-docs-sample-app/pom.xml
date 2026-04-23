@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.agentic.docs</groupId>
         <artifactId>agentic-docs-parent</artifactId>
@@ -11,17 +12,35 @@
 
     <artifactId>agentic-docs-sample-app</artifactId>
     <packaging>jar</packaging>
+    <name>Agentic Docs Sample App</name>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
+
+        <!-- The starter wires up all Agentic Docs beans automatically -->
         <dependency>
             <groupId>com.agentic.docs</groupId>
             <artifactId>agentic-docs-spring-boot-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- Springdoc: provides @Operation annotations + Swagger UI at /swagger-ui.html -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
