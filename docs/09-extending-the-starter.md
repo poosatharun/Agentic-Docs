@@ -1,0 +1,246 @@
+# 09 — Extending the Starter
+
+## Adding a Custom System Prompt
+
+The system prompt is currently hardcoded in `AgenticDocsChatController`. To make it configurable, add a `@ConfigurationProperties` class:
+
+```java
+// In agentic-docs-core
+@ConfigurationProperties(prefix = "agentic.docs")
+public class AgenticDocsProperties {
+    private boolean enabled = false;
+    private String systemPrompt = DEFAULT_SYSTEM_PROMPT;
+    // getters + setters
+}
+```
+
+Then inject it into the controller:
+```java
+public AgenticDocsChatController(VectorStore vectorStore,
+                                  ChatClient.Builder builder,
+                                  AgenticDocsProperties props) {
+    this.systemPrompt = props.getSystemPrompt();
+    // ...
+}
+```
+
+Users can then override the prompt in `application.properties`:
+```properties
+agentic.docs.system-prompt=You are a terse API assistant. Answer in bullet points only.
+```
+
+---
+
+## Adding Streaming Responses
+
+Replace the blocking `call().content()` with a streaming response:
+
+**Backend — change the controller method:**
+```java
+@PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+public Flux<String> chatStream(@RequestBody ChatRequest request) {
+    // ... similarity search same as before ...
+
+    return chatClient.prompt()
+            .system(s -> s.text(SYSTEM_PROMPT).param("context", context))
+            .user(request.question())
+            .stream()
+            .content();
+}
+```
+
+**Frontend — use EventSource or fetch with ReadableStream:**
+```javascript
+const res = await fetch('/agentic-docs/api/chat/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+})
+
+const reader = res.body.getReader()
+const decoder = new TextDecoder()
+let answer = ''
+
+while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    answer += decoder.decode(value)
+    setCurrentAnswer(answer) // update UI incrementally
+}
+```
+
+---
+
+## Adding Conversation History (Multi-Turn)
+
+To support follow-up questions, send the conversation history with each request:
+
+**Backend — update `ChatRequest`:**
+```java
+public record ChatRequest(
+    String question,
+    List<MessageDto> history  // previous messages
+) {}
+
+public record MessageDto(String role, String content) {}
+```
+
+**Backend — build the prompt with history:**
+```java
+var promptSpec = chatClient.prompt()
+        .system(s -> s.text(SYSTEM_PROMPT).param("context", context));
+
+// Add history messages
+for (MessageDto msg : request.history()) {
+    if ("user".equals(msg.role())) {
+        promptSpec = promptSpec.user(msg.content());
+    } else {
+        promptSpec = promptSpec.assistant(msg.content());
+    }
+}
+
+String answer = promptSpec.user(request.question()).call().content();
+```
+
+**Frontend — send history with each request:**
+```javascript
+body: JSON.stringify({
+    question,
+    history: messages.slice(1) // exclude the initial greeting
+        .map(m => ({ role: m.role, content: m.content }))
+})
+```
+
+---
+
+## Adding Authentication
+
+To protect the chat endpoint with Spring Security:
+
+```xml
+<!-- Add to sample-app or host app pom.xml -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/agentic-docs/**").authenticated()
+                .anyRequest().permitAll()
+            )
+            .httpBasic(Customizer.withDefaults())
+            .csrf(csrf -> csrf.disable())
+            .build();
+    }
+}
+```
+
+---
+
+## Adding a Custom Endpoint Filter
+
+To exclude certain endpoints from being indexed (e.g., internal health checks):
+
+```java
+// Override ApiMetadataScanner in your host app
+@Component
+@Primary
+public class FilteredApiMetadataScanner extends ApiMetadataScanner {
+
+    public FilteredApiMetadataScanner(RequestMappingHandlerMapping mapping) {
+        super(mapping);
+    }
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        super.onApplicationEvent(event);
+        // Filter out actuator and internal endpoints
+        this.scannedEndpoints = this.scannedEndpoints.stream()
+                .filter(e -> !e.path().startsWith("/actuator"))
+                .filter(e -> !e.path().startsWith("/internal"))
+                .toList();
+    }
+}
+```
+
+---
+
+## Switching to a Persistent Vector Store
+
+See [05-configuration-reference.md](./05-configuration-reference.md) for the full property reference.
+
+The key change is in the starter's `pom.xml` — remove `spring-ai-simple-vector-store` and add the desired store:
+
+```xml
+<!-- Remove -->
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-simple-vector-store</artifactId>
+</dependency>
+
+<!-- Add (example: pgvector) -->
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-pgvector-store-spring-boot-starter</artifactId>
+</dependency>
+```
+
+Also remove the `VectorStoreConfig` bean — the pgvector starter provides its own `VectorStore` bean via autoconfiguration.
+
+---
+
+## Contributing
+
+### Project conventions
+
+- Java 21 features are encouraged: records, text blocks, pattern matching, sealed classes
+- No Lombok — the codebase is intentionally explicit
+- All new components in `com.agentic.docs.core` are auto-discovered by `@ComponentScan`
+- New configuration properties should go in a `@ConfigurationProperties` class, not hardcoded strings
+
+### Adding a new LLM provider to the starter
+
+1. Add the Spring AI provider starter to `agentic-docs-spring-boot-starter/pom.xml`
+2. Add a `@ConditionalOnClass` guard in `AgenticDocsAutoConfiguration` if needed
+3. Document the required properties in `05-configuration-reference.md`
+
+### Running tests
+
+```bash
+mvn test
+```
+
+The sample app has no tests currently. Unit tests for `ApiMetadataScanner` and `AgenticDocsChatController` are the highest-value additions.
+
+### Building the UI after changes
+
+```bash
+cd agentic-docs-ui
+npm run build
+```
+
+The output is committed to `agentic-docs-spring-boot-starter/src/main/resources/static/agentic-docs/` so that the Maven build does not require Node.js.
+
+---
+
+## Roadmap
+
+| Feature | Priority | Complexity |
+|---|---|---|
+| Streaming responses | High | Medium |
+| Configurable system prompt | High | Low |
+| Multi-turn conversation | Medium | Medium |
+| Authentication support | Medium | Low |
+| Persistent vector store option | Medium | Low |
+| Code syntax highlighting (highlight.js) | Low | Low |
+| Export conversation as Markdown | Low | Low |
+| Support for `@Controller` (non-REST) | Low | Medium |
