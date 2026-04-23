@@ -20,6 +20,7 @@
 | [08-api-reference.md](./08-api-reference.md) | REST API contract for the chat endpoint |
 | [09-extending-the-starter.md](./09-extending-the-starter.md) | Streaming, multi-turn, auth, contributing, roadmap |
 | [**10-switching-llm-providers.md**](./10-switching-llm-providers.md) | **Step-by-step guide: switch between OpenAI and Ollama** |
+| [**11-ollama-local-setup.md**](./11-ollama-local-setup.md) | **Complete Ollama install + project setup on Windows (start here for offline)** |
 
 ---
 
