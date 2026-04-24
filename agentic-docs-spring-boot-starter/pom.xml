@@ -8,6 +8,7 @@
         <groupId>com.agentic.docs</groupId>
         <artifactId>agentic-docs-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>agentic-docs-spring-boot-starter</artifactId>
@@ -29,9 +30,22 @@
         </dependency>
 
         <!-- In-memory vector store — used by both providers -->
+        <!-- optional: host apps should not inherit this on their compile classpath -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-simple-vector-store</artifactId>
+            <artifactId>spring-ai-starter-vector-store-simple</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+            Generates spring-autoconfigure-metadata.properties at build time.
+            Allows Spring Boot to skip condition evaluation for inactive auto-configs,
+            improving startup performance. Must be optional so it is not transitive.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure-processor</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -47,8 +61,8 @@
     ║    mvn clean install -P ollama                                   ║
     ║                                                                  ║
     ║  Then activate the matching Spring profile at runtime:           ║
-    ║    OpenAI : --spring.profiles.active=openai                      ║
-    ║    Ollama : --spring.profiles.active=ollama                      ║
+    ║    OpenAI : &#45;&#45;spring.profiles.active=openai                      ║
+    ║    Ollama : &#45;&#45;spring.profiles.active=ollama                      ║
     ╚══════════════════════════════════════════════════════════════════╝
     -->
     <profiles>
@@ -62,7 +76,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.springframework.ai</groupId>
-                    <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+                    <artifactId>spring-ai-starter-model-openai</artifactId>
                 </dependency>
             </dependencies>
         </profile>
@@ -76,7 +90,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.springframework.ai</groupId>
-                    <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+                    <artifactId>spring-ai-starter-model-ollama</artifactId>
                 </dependency>
             </dependencies>
         </profile>

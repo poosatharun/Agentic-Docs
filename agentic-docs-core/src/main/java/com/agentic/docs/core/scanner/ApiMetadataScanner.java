@@ -28,8 +28,10 @@ public class ApiMetadataScanner implements ApplicationListener<ContextRefreshedE
 
     private static final Logger log = LoggerFactory.getLogger(ApiMetadataScanner.class);
 
+    private static final String SELF_PACKAGE_PREFIX = "com.agentic.docs";
+
     private final RequestMappingHandlerMapping handlerMapping;
-    private List<ApiEndpointMetadata> scannedEndpoints = Collections.emptyList();
+    private volatile List<ApiEndpointMetadata> scannedEndpoints = Collections.emptyList();
 
     public ApiMetadataScanner(RequestMappingHandlerMapping handlerMapping) {
         this.handlerMapping = handlerMapping;
@@ -47,10 +49,13 @@ public class ApiMetadataScanner implements ApplicationListener<ContextRefreshedE
             RequestMappingInfo mappingInfo = entry.getKey();
             HandlerMethod handlerMethod = entry.getValue();
 
-            // Only process @RestController beans
+            // Only process @RestController beans; skip Agentic Docs' own internal endpoints
             Class<?> beanType = handlerMethod.getBeanType();
             if (!beanType.isAnnotationPresent(
                     org.springframework.web.bind.annotation.RestController.class)) {
+                continue;
+            }
+            if (beanType.getName().startsWith(SELF_PACKAGE_PREFIX)) {
                 continue;
             }
 

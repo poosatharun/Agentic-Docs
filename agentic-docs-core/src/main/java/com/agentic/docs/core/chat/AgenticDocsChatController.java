@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.http.ResponseEntity;
 
 /**
  * Handles chat requests from the embedded UI.
@@ -56,7 +57,11 @@ public class AgenticDocsChatController {
     }
 
     @PostMapping("/chat")
-    public ChatResponse chat(@RequestBody ChatRequest request) {
+    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
+        if (request.question() == null || request.question().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(new ChatResponse("Please provide a non-empty question."));
+        }
         log.debug("[AgenticDocs] Received question: {}", request.question());
 
         // 1. Retrieve the top-5 most relevant endpoint documents
@@ -78,7 +83,11 @@ public class AgenticDocsChatController {
                 .call()
                 .content();
 
-        return new ChatResponse(answer);
+        if (answer == null || answer.isBlank()) {
+            answer = "I could not find a relevant endpoint for that. Please check the Swagger UI.";
+        }
+
+        return ResponseEntity.ok(new ChatResponse(answer));
     }
 
     // ── Request / Response records ────────────────────────────────────────────

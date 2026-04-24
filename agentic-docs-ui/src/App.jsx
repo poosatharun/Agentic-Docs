@@ -94,8 +94,10 @@ function MessageBubble({ msg }) {
         ) : (
           <ReactMarkdown
             components={{
-              code({ inline, children, ...props }) {
-                return inline
+              code({ node, children, ...props }) {
+                const isInline = node?.position?.start?.line === node?.position?.end?.line
+                  && !String(children).includes('\n');
+                return isInline
                   ? <code className="bg-slate-900 text-violet-300 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>
                   : (
                     <div className="my-3">
@@ -259,7 +261,7 @@ export default function App() {
     <div className="flex flex-col h-screen bg-slate-900 text-white">
       <Header onReset={reset} />
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex flex-col flex-1 overflow-y-auto">
         {showSuggestions ? (
           <SuggestionChips onSelect={sendMessage} />
         ) : (
