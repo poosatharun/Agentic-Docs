@@ -36,38 +36,8 @@
         </dependency>
     </dependencies>
 
-    <!--
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║  TO SWITCH PROVIDERS — change spring.profiles.active in         ║
-    ║  application.properties, then rebuild with the matching flag:   ║
-    ║                                                                  ║
-    ║  OpenAI (default):  mvn clean package                           ║
-    ║                     mvn clean package -P openai                  ║
-    ║                                                                  ║
-    ║  Ollama (local):    mvn clean package -P ollama                  ║
-    ╚══════════════════════════════════════════════════════════════════╝
-    -->
-    <profiles>
-
-        <!-- ── PROFILE: openai (DEFAULT) ─────────────────────────────── -->
-        <profile>
-            <id>openai</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <!-- No extra deps needed — starter's openai profile handles it -->
-        </profile>
-
-        <!-- ── PROFILE: ollama ────────────────────────────────────────── -->
-        <profile>
-            <id>ollama</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <!-- No extra deps needed — starter's ollama profile handles it -->
-        </profile>
-
-    </profiles>
+    <!-- To switch LLM providers, rebuild the starter with -P ollama or -P openai,
+         then set spring.profiles.active in application.properties accordingly. -->
 
     <build>
         <plugins>

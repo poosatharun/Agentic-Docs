@@ -8,14 +8,14 @@ com.agentic.docs.core
 │   ├── ApiEndpointMetadata.java     ← DTO record
 │   └── ApiMetadataScanner.java      ← Endpoint discovery
 ├── config/
-│   └── VectorStoreConfig.java       ← SimpleVectorStore bean
+│   └── VectorStoreConfig.java       ← SimpleVectorStore bean (fallback)
 ├── ingestor/
 │   └── ApiDocumentIngestor.java     ← Embedding + storage
 └── chat/
     └── AgenticDocsChatController.java ← RAG chat endpoint
 
 com.agentic.docs.autoconfigure
-└── AgenticDocsAutoConfiguration.java ← Spring Boot AutoConfig
+└── AgenticDocsAutoConfiguration.java ← Spring Boot AutoConfig (enabled by default)
 ```
 
 ---

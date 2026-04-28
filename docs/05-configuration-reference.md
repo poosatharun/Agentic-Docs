@@ -36,14 +36,14 @@ Spring Boot automatically loads `application-{profile}.properties` when
 ```properties
 server.port=8080
 
-# ── Agentic Docs ──────────────────────────────────────────────────────────────
-agentic.docs.enabled=true
-
 # ── Active LLM Profile ────────────────────────────────────────────────────────
-# Change this value to switch providers:
-#   openai  → cloud, paid, needs SPRING_AI_OPENAI_API_KEY
-#   ollama  → local, free, needs Ollama running on localhost:11434
+# openai → Uses OpenAI API (requires SPRING_AI_OPENAI_API_KEY env var)
+# ollama → Uses local Ollama (requires ollama serve running on localhost:11434)
 spring.profiles.active=openai
+
+# ── Agentic Docs ──────────────────────────────────────────────────────────────
+# Enabled by default (matchIfMissing=true). Set to false to disable.
+# agentic.docs.enabled=false
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.level.com.agentic.docs=INFO
@@ -53,7 +53,7 @@ logging.level.com.agentic.docs=INFO
 
 | Property | Type | Default | Required | Description |
 |---|---|---|---|---|
-| `agentic.docs.enabled` | `boolean` | `false` | **Yes** | Master on/off switch for the starter |
+| `agentic.docs.enabled` | `boolean` | `true` | No | Master on/off switch for the starter (enabled by default) |
 | `spring.profiles.active` | `string` | — | **Yes** | Set to `openai` or `ollama` |
 
 ---

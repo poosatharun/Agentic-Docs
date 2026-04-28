@@ -24,7 +24,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@ConditionalOnProperty(prefix = "agentic.docs", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "agentic.docs", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ComponentScan(basePackages = "com.agentic.docs.core")
 public class AgenticDocsAutoConfiguration {
     // All beans are registered via @ComponentScan + @Configuration/@Component annotations

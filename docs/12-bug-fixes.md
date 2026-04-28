@@ -131,3 +131,74 @@ code({ node, children, ...props }) {
 | 4 | `AgenticDocsChatController` | Null LLM response not handled | Medium |
 | 5 | `App.jsx` | `<main>` not a flex container, breaking vertical centering | Low |
 | 6 | `App.jsx` | Deprecated `inline` prop in react-markdown code renderer | Low |
+| 7 | `VectorStoreConfig` | Bean conflict with starter's auto-configured VectorStore | Medium |
+| 8 | `AgenticDocsAutoConfiguration` | Required explicit `agentic.docs.enabled=true` to activate | Low |
+| 9 | Parent `pom.xml` | Spring AI BOM not managing artifact versions correctly | High |
+| 10 | Sample app `pom.xml` | Empty Maven profiles adding unnecessary complexity | Low |
+
+---
+
+## Fix 7 — VectorStore Bean Conflict
+
+**File:** `agentic-docs-core/.../config/VectorStoreConfig.java`  
+**Severity:** Medium
+
+**Problem:**  
+The `VectorStoreConfig` always created a `SimpleVectorStore` bean, even when `spring-ai-starter-vector-store-simple` in the starter already auto-configured one. This could cause `BeanDefinitionOverrideException` or unexpected behavior depending on bean ordering.
+
+**Fix:**  
+Added `@ConditionalOnMissingBean(VectorStore.class)` so the bean is only created as a fallback:
+
+```java
+@Bean
+@ConditionalOnMissingBean(VectorStore.class)
+public VectorStore vectorStore(EmbeddingModel embeddingModel) {
+    return SimpleVectorStore.builder(embeddingModel).build();
+}
+```
+
+---
+
+## Fix 8 — AutoConfiguration Requires Explicit Opt-In
+
+**File:** `agentic-docs-spring-boot-starter/.../AgenticDocsAutoConfiguration.java`  
+**Severity:** Low
+
+**Problem:**  
+`@ConditionalOnProperty(havingValue = "true")` without `matchIfMissing = true` meant the starter did nothing unless users explicitly added `agentic.docs.enabled=true`. This violated the principle of least surprise for a starter library.
+
+**Fix:**  
+Added `matchIfMissing = true` so the starter activates by default. Users can still disable with `agentic.docs.enabled=false`.
+
+---
+
+## Fix 9 — Spring AI Dependency Versions Not Resolving
+
+**File:** Parent `pom.xml`  
+**Severity:** High
+
+**Problem:**  
+The `spring-ai-bom` import did not manage all Spring AI artifact versions (e.g., `spring-ai-core`, `spring-ai-starter-vector-store-simple`). This caused `'dependencies.dependency.version' is missing` build failures.
+
+**Fix:**  
+Added explicit version entries in `<dependencyManagement>` for all Spring AI artifacts used:
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-core</artifactId>
+    <version>${spring-ai.version}</version>
+</dependency>
+```
+
+---
+
+## Fix 10 — Removed Unused Placeholder Packages and Empty Profiles
+
+**Severity:** Low
+
+**Problem:**  
+Empty `rag/` and `web/` packages in the core module (with only `.gitkeep`) added confusion about the architecture. Empty Maven profiles in the sample app did nothing.
+
+**Fix:**  
+Removed the empty directories and stripped the redundant profiles from the sample app POM.
