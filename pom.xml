@@ -89,12 +89,12 @@
         </pluginManagement>
     </build>
 
-    <!-- Spring AI artifacts require Spring's milestone repository -->
+    <!-- Spring AI 1.0.0 GA is on Maven Central -->
     <repositories>
         <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2</url>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
     </repositories>

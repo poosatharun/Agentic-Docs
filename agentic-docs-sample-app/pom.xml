@@ -21,6 +21,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-core</artifactId>
+            <version>1.0.0-M6</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- The starter wires up all Agentic Docs beans automatically -->
         <dependency>
             <groupId>com.agentic.docs</groupId>
