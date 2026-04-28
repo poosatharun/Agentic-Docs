@@ -106,7 +106,7 @@ public class ApiMetadataScanner implements ApplicationListener<ContextRefreshedE
         try {
             Class<?> operationAnnotation = Class.forName("io.swagger.v3.oas.annotations.Operation");
             Object annotation = method.getAnnotation(
-                    (Class<java.lang.annotation.Annotation>) operationAnnotation);
+                    operationAnnotation.asSubclass(java.lang.annotation.Annotation.class));
             if (annotation != null) {
                 String summary = (String) operationAnnotation.getMethod("summary").invoke(annotation);
                 if (summary != null && !summary.isBlank()) return summary;
