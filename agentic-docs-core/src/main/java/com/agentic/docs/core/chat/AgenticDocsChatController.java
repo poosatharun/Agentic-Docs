@@ -1,5 +1,7 @@
 package com.agentic.docs.core.chat;
 
+import com.agentic.docs.core.scanner.ApiEndpointMetadata;
+import com.agentic.docs.core.scanner.ApiMetadataScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -50,10 +52,18 @@ public class AgenticDocsChatController {
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
+    private final ApiMetadataScanner apiMetadataScanner;
 
-    public AgenticDocsChatController(VectorStore vectorStore, ChatClient.Builder chatClientBuilder) {
+    public AgenticDocsChatController(VectorStore vectorStore, ChatClient.Builder chatClientBuilder,
+                                     ApiMetadataScanner apiMetadataScanner) {
         this.vectorStore = vectorStore;
         this.chatClient = chatClientBuilder.build();
+        this.apiMetadataScanner = apiMetadataScanner;
+    }
+
+    @GetMapping("/endpoints")
+    public ResponseEntity<List<ApiEndpointMetadata>> listEndpoints() {
+        return ResponseEntity.ok(apiMetadataScanner.getScannedEndpoints());
     }
 
     @PostMapping("/chat")
