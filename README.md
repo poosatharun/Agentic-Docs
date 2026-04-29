@@ -14,6 +14,7 @@
 - [Running the UI (Development)](#running-the-ui-development)
 - [Accessing the Agent](#accessing-the-agent)
 - [API Endpoints](#api-endpoints)
+- [What's New](#whats-new)
 - [Configuration Reference](#configuration-reference)
 - [Known Issues & Fixes](#known-issues--fixes)
 
@@ -182,7 +183,7 @@ npm run build
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| `GET` | `/agentic-docs/api/endpoints` | Returns JSON list of all scanned REST endpoints |
+| `GET` | `/agentic-docs/api/endpoints` | Returns JSON list of all scanned REST endpoints (includes `pathParams`, `queryParams`, `requestBodyType`, `responseType`) |
 | `POST` | `/agentic-docs/api/chat` | RAG chat — body: `{"question": "..."}`, response: `{"answer": "..."}` |
 | `GET` | `/agentic-docs/api/chat` | Returns a helpful message (endpoint only accepts POST) |
 
@@ -198,6 +199,27 @@ npm run build
 | `POST` | `/api/v1/payments/process` | Process a payment |
 | `GET` | `/api/v1/accounts/{accountId}/payments` | Get paginated payment history |
 | `POST` | `/api/v1/payments/refund` | Issue a manual refund |
+
+---
+
+## What's New
+
+### v1.1 — Endpoint Inputs & Outputs Panel
+
+When you click any endpoint in the **API Explorer** tab, the expanded panel now shows a rich **Inputs & Outputs** section:
+
+| Field | Color | What it shows |
+|---|---|---|
+| **Path Params** | 🟡 Amber | `{id}`, `{accountId}` — path variables extracted from `@PathVariable` |
+| **Query Params** | 🔵 Sky | `?page`, `?size` — query strings extracted from `@RequestParam` |
+| **Request Body** | 🟢 Emerald | DTO class name extracted from `@RequestBody` (e.g. `CreateUserRequest`) |
+| **Response** | 🟣 Violet | Return type, unwrapped from `ResponseEntity<T>` (e.g. `UserResponse`) |
+
+This data is extracted **automatically at startup** from your controller method signatures — no annotations or extra config required.
+
+The same fields are also injected into the LLM context, so the AI gives more accurate answers about request shapes and response types.
+
+> Full details: [`docs/13-endpoint-inputs-outputs.md`](docs/13-endpoint-inputs-outputs.md)
 
 ---
 

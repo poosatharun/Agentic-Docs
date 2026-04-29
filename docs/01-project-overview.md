@@ -45,6 +45,7 @@ Agentic Docs embeds a **RAG (Retrieval-Augmented Generation) agent** directly in
 | Read 150 Swagger entries manually | Ask one question in plain English |
 | Trial-and-error with request bodies | Get the exact request shape from context |
 | Copy-paste boilerplate from Stack Overflow | Get code generated from your actual endpoints |
+| Click an endpoint in Swagger — see no param types | Click an endpoint — see path params, query params, request body, and response type instantly |
 | 3 hours of research | 30 seconds |
 
 ---

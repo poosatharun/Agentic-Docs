@@ -33,6 +33,23 @@ App
 └── InputBar
     ├── auto-resize <textarea>
     └── Send <button>
+
+ApiExplorer (tab)
+└── EndpointRow × N
+    ├── Summary row  (always visible)
+    │   ├── MethodBadge
+    │   ├── path <code>
+    │   └── ChevronDown / ChevronUp
+    └── Expanded panel  (on click)
+        ├── Metadata grid  (Controller · Method name)
+        ├── Description  (if present)
+        ├── Inputs & Outputs panel  ← NEW
+        │   ├── Path Params   — amber badges  e.g. {id}
+        │   ├── Query Params  — sky badges    e.g. ?page
+        │   ├── Request Body  — emerald badge e.g. CreateUserRequest
+        │   └── Response      — violet badge  e.g. UserResponse
+        ├── [Try it out] button → TryItPanel
+        └── [Ask AI] button
 ```
 
 ---
@@ -144,6 +161,42 @@ useEffect(() => {
 The textarea starts at 1 row and grows as the user types, up to a maximum of 140px (approximately 5 lines). This is the standard pattern used by ChatGPT, Claude, and other chat interfaces. It avoids the jarring experience of a fixed-height input that requires scrolling for multi-line questions.
 
 **Enter to send, Shift+Enter for newline** — standard chat keyboard behavior. The hint is shown below the input bar.
+
+---
+
+## `EndpointRow` — Inputs & Outputs Panel
+
+When an `EndpointRow` is expanded, the component renders a conditional `Inputs & Outputs` panel:
+
+```jsx
+{(
+  (endpoint.pathParams?.length > 0) ||
+  (endpoint.queryParams?.length > 0) ||
+  endpoint.requestBodyType ||
+  endpoint.responseType
+) && (
+  <div className="mt-3 rounded-xl border border-white/8 overflow-hidden">
+    {/* Path Params — amber */}
+    {/* Query Params — sky */}
+    {/* Request Body — emerald */}
+    {/* Response    — violet */}
+  </div>
+)}
+```
+
+**Why conditional rendering?**  
+Endpoints like `GET /api/health` have no params and return `void`. Rendering an empty "Inputs & Outputs" box for those would add visual noise. The panel only renders when there is something meaningful to show.
+
+**Color semantics:**
+
+| Color | Token | Meaning |
+|---|---|---|
+| 🟡 Amber | `bg-amber-500/10 text-amber-300` | Path variable — part of the URL itself |
+| 🔵 Sky | `bg-sky-500/10 text-sky-300` | Query string — optional filter/pagination |
+| 🟢 Emerald | `bg-emerald-500/10 text-emerald-300` | Request body — structured JSON input |
+| 🟣 Violet | `bg-violet-500/10 text-violet-300` | Response — what the caller receives back |
+
+The four colors map to four distinct roles in an HTTP contract. A developer scanning 20 endpoints can identify the input/output shape at a glance without reading any code.
 
 ---
 

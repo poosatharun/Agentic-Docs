@@ -1,7 +1,7 @@
 # Agentic Docs — Documentation Index
 
-> **Version:** 1.0.0-SNAPSHOT  
-> **Stack:** Java 21 · Spring Boot 3.4 · Spring AI 1.0.0-M6 · React 18 · Tailwind CSS v4  
+> **Version:** 1.1.0-SNAPSHOT  
+> **Stack:** Java 21 · Spring Boot 3.4 · Spring AI 1.0.0 GA · React 18 · Tailwind CSS v4  
 > **Providers:** OpenAI (cloud) · Ollama (local/offline)
 
 ---
@@ -21,6 +21,7 @@
 | [09-extending-the-starter.md](./09-extending-the-starter.md) | Streaming, multi-turn, auth, contributing, roadmap |
 | [**10-switching-llm-providers.md**](./10-switching-llm-providers.md) | **Step-by-step guide: switch between OpenAI and Ollama** |
 | [**11-ollama-local-setup.md**](./11-ollama-local-setup.md) | **Complete Ollama install + project setup on Windows (start here for offline)** |
+| [**13-endpoint-inputs-outputs.md**](./13-endpoint-inputs-outputs.md) | **Endpoint Inputs & Outputs panel — how it works, what it shows, how to extend it** |
 
 ---
 

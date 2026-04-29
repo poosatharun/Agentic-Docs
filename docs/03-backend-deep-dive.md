@@ -30,15 +30,29 @@ public record ApiEndpointMetadata(
         String httpMethod,
         String controllerName,
         String methodName,
-        String description
+        String description,
+        List<String> pathParams,      // @PathVariable names
+        List<String> queryParams,     // @RequestParam names
+        String requestBodyType,       // @RequestBody parameter simple class name
+        String responseType           // return type, unwrapped from ResponseEntity<T>
 ) {
     public String toLlmReadableText() {
         return """
-                Endpoint  : [%s] %s
-                Controller: %s
-                Method    : %s
-                Summary   : %s
-                """.formatted(httpMethod, path, controllerName, methodName, description);
+                Endpoint      : [%s] %s
+                Controller    : %s
+                Method        : %s
+                Path Params   : %s
+                Query Params  : %s
+                Request Body  : %s
+                Response Type : %s
+                Summary       : %s
+                """.formatted(
+                httpMethod, path, controllerName, methodName,
+                pathParams.isEmpty() ? "none" : String.join(", ", pathParams),
+                queryParams.isEmpty() ? "none" : String.join(", ", queryParams),
+                requestBodyType != null ? requestBodyType : "none",
+                responseType != null ? responseType : "void",
+                description);
     }
 }
 ```
@@ -53,6 +67,9 @@ The text that gets embedded into the vector store determines the quality of simi
 
 **Why include `controllerName` and `methodName`?**  
 When the LLM generates code, it can reference the actual Java class and method name. This makes generated snippets more accurate and immediately usable in the host codebase.
+
+**Why add `pathParams`, `queryParams`, `requestBodyType`, `responseType`?**  
+These four fields close the gap between Swagger and Agentic Docs. Without them, a developer looking at an endpoint in the API Explorer could see the path and HTTP method but not the inputs or outputs — exactly the same limitation as Swagger's collapsed view. With them, a single click reveals the full contract. The fields are also injected into the LLM context via `toLlmReadableText()`, so the AI can answer questions like *"what fields does the request body require?"* accurately.
 
 ---
 
@@ -106,6 +123,28 @@ private String extractDescription(Method method) {
 ```
 
 The `swagger-annotations` dependency is marked `optional` in the core POM. If the host app does not use springdoc, the class simply won't be found and the scanner falls back to "No description provided." This keeps the core module lightweight and non-prescriptive.
+
+### Inputs & Outputs Extraction
+
+Four additional helper methods use Spring's `MethodParameter` API to extract contract information from each handler method:
+
+```java
+// Reads @PathVariable name (falls back to Java parameter name)
+private List<String> extractPathParams(HandlerMethod hm) { ... }
+
+// Reads @RequestParam name (falls back to Java parameter name)
+private List<String> extractQueryParams(HandlerMethod hm) { ... }
+
+// Finds the first @RequestBody parameter and returns its simple class name
+private String extractRequestBodyType(HandlerMethod hm) { ... }
+
+// Reads the generic return type, unwrapping ResponseEntity<T> to T
+private String extractResponseType(HandlerMethod hm) { ... }
+```
+
+`MethodParameter` is Spring's abstraction over `java.lang.reflect.Parameter`. It preserves parameter names from the compiled bytecode (requires `-parameters` compiler flag, which Spring Boot enables by default) and gives direct access to each annotation.
+
+For `ResponseEntity<UserResponse>`, the method inspects the `ParameterizedType` generic argument and strips the `ResponseEntity` wrapper — the UI then shows `UserResponse` rather than the confusing raw type.
 
 ---
 
