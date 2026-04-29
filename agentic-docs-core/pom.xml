@@ -35,16 +35,37 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-client-chat</artifactId>
         </dependency>
-        <!-- Spring AI: ChatClient, VectorStore, EmbeddingModel, Document -->
-        <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-core -->
-        
-
         <!-- Optional: read @Operation summaries if springdoc is on classpath -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger-annotations.version}</version>
             <optional>true</optional>
+        </dependency>
+
+        <!--
+            Bean Validation (Jakarta) — provides @NotBlank, @Size, etc. for ChatRequest.
+            Marked 'provided' because the host Spring Boot app already brings
+            hibernate-validator on the classpath via spring-boot-starter-validation.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ── Test dependencies ───────────────────────────────────────────── -->
+        <!--
+            spring-boot-starter-test pulls in everything needed for testing:
+              - JUnit 5 (write test methods with @Test)
+              - Mockito   (create fake/mock objects with @Mock, when(), verify())
+              - AssertJ   (fluent assertions: assertThat(...).isEqualTo(...))
+              - MockMvc   (simulate HTTP calls without starting a real server)
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

@@ -35,8 +35,7 @@
             <artifactId>spring-ai-model</artifactId>
         </dependency>
 
-        <!-- In-memory vector store — used by both providers -->
-
+        <!-- SimpleVectorStore is provided transitively via spring-ai-vector-store in the core module -->
 
         <!--
             Generates spring-autoconfigure-metadata.properties at build time.

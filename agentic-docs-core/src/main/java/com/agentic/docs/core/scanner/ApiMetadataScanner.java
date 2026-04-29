@@ -11,12 +11,20 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import org.springframework.core.MethodParameter;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Listens for {@link ContextRefreshedEvent} and uses {@link RequestMappingHandlerMapping}
  * to discover every {@code @RestController} endpoint in the host application.
@@ -35,6 +43,7 @@ public class ApiMetadataScanner {
     );
 
     private final RequestMappingHandlerMapping handlerMapping;
+    private final AtomicBoolean scanned = new AtomicBoolean(false);
     private volatile List<ApiEndpointMetadata> scannedEndpoints = Collections.emptyList();
 
     public ApiMetadataScanner(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
@@ -45,7 +54,7 @@ public class ApiMetadataScanner {
     @Order(1)  // Must run BEFORE ApiDocumentIngestor (@Order(2))
     public void onApplicationEvent(ContextRefreshedEvent event) {
         // Guard against duplicate events fired in parent/child contexts
-        if (!scannedEndpoints.isEmpty()) return;
+        if (!scanned.compareAndSet(false, true)) return;
 
         List<ApiEndpointMetadata> endpoints = new ArrayList<>();
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = handlerMapping.getHandlerMethods();
@@ -60,8 +69,8 @@ public class ApiMetadataScanner {
                     org.springframework.web.bind.annotation.RestController.class)) {
                 continue;
             }
-            if (beanType.getName().startsWith(INTERNAL_PACKAGE_PREFIXES.get(0)) ||
-                beanType.getName().startsWith(INTERNAL_PACKAGE_PREFIXES.get(1))) {
+            String beanClassName = beanType.getName();
+            if (INTERNAL_PACKAGE_PREFIXES.stream().anyMatch(beanClassName::startsWith)) {
                 continue;
             }
 
@@ -70,8 +79,13 @@ public class ApiMetadataScanner {
             String controllerName = beanType.getSimpleName();
             String methodName = handlerMethod.getMethod().getName();
             String description = extractDescription(handlerMethod.getMethod());
+            List<String> pathParams = extractPathParams(handlerMethod);
+            List<String> queryParams = extractQueryParams(handlerMethod);
+            String requestBodyType = extractRequestBodyType(handlerMethod);
+            String responseType = extractResponseType(handlerMethod);
 
-            endpoints.add(new ApiEndpointMetadata(path, httpMethod, controllerName, methodName, description));
+            endpoints.add(new ApiEndpointMetadata(path, httpMethod, controllerName, methodName,
+                    description, pathParams, queryParams, requestBodyType, responseType));
         }
 
         this.scannedEndpoints = Collections.unmodifiableList(endpoints);
@@ -102,6 +116,57 @@ public class ApiMetadataScanner {
             return info.getMethodsCondition().getMethods().iterator().next().name();
         }
         return "GET";
+    }
+
+    private List<String> extractPathParams(HandlerMethod handlerMethod) {
+        List<String> params = new ArrayList<>();
+        for (MethodParameter mp : handlerMethod.getMethodParameters()) {
+            PathVariable pv = mp.getParameterAnnotation(PathVariable.class);
+            if (pv != null) {
+                String name = (pv.value() != null && !pv.value().isBlank()) ? pv.value() : mp.getParameterName();
+                params.add(name != null ? name : "param" + mp.getParameterIndex());
+            }
+        }
+        return Collections.unmodifiableList(params);
+    }
+
+    private List<String> extractQueryParams(HandlerMethod handlerMethod) {
+        List<String> params = new ArrayList<>();
+        for (MethodParameter mp : handlerMethod.getMethodParameters()) {
+            RequestParam rp = mp.getParameterAnnotation(RequestParam.class);
+            if (rp != null) {
+                String name = (rp.value() != null && !rp.value().isBlank()) ? rp.value() : mp.getParameterName();
+                params.add(name != null ? name : "param" + mp.getParameterIndex());
+            }
+        }
+        return Collections.unmodifiableList(params);
+    }
+
+    private String extractRequestBodyType(HandlerMethod handlerMethod) {
+        for (MethodParameter mp : handlerMethod.getMethodParameters()) {
+            if (mp.hasParameterAnnotation(RequestBody.class)) {
+                return mp.getParameterType().getSimpleName();
+            }
+        }
+        return null;
+    }
+
+    private String extractResponseType(HandlerMethod handlerMethod) {
+        Class<?> returnType = handlerMethod.getMethod().getReturnType();
+        if (returnType == void.class || returnType == Void.class) return "void";
+        if ("ResponseEntity".equals(returnType.getSimpleName())) {
+            Type genericReturn = handlerMethod.getMethod().getGenericReturnType();
+            if (genericReturn instanceof ParameterizedType pt) {
+                Type[] args = pt.getActualTypeArguments();
+                if (args.length > 0) {
+                    String typeName = args[0].getTypeName();
+                    // strip package prefix and any trailing >
+                    int lastDot = typeName.lastIndexOf('.');
+                    return typeName.substring(lastDot + 1).replace(">", "");
+                }
+            }
+        }
+        return returnType.getSimpleName();
     }
 
     /**

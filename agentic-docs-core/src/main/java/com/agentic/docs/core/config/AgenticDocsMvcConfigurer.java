@@ -5,6 +5,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.List;
+
 /**
  * MVC configuration for Agentic Docs:
  * <ul>
@@ -15,6 +17,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class AgenticDocsMvcConfigurer implements WebMvcConfigurer {
+
+    /**
+     * Holds the CORS origins list from {@code agentic.docs.cors.allowed-origins}.
+     * Injected by Spring via constructor injection.
+     */
+    private final AgenticDocsProperties properties;
+
+    public AgenticDocsMvcConfigurer(AgenticDocsProperties properties) {
+        this.properties = properties;
+    }
 
     /**
      * Forward all UI entry-point URLs to the bundled React index.html.
@@ -32,13 +44,25 @@ public class AgenticDocsMvcConfigurer implements WebMvcConfigurer {
     }
 
     /**
-     * Allow the Vite dev-server (port 5173) and any other origin to call
-     * the Agentic Docs REST API, including preflight OPTIONS requests.
+     * Allow configured origins to call the Agentic Docs REST API.
+     *
+     * <p>Controlled via {@code agentic.docs.cors.allowed-origins} in
+     * {@code application.properties}. Defaults to {@code http://localhost:5173}
+     * (the Vite dev server) to avoid an open wildcard in production.</p>
+     *
+     * <p>Example — allow multiple origins:</p>
+     * <pre>
+     * agentic.docs.cors.allowed-origins=http://localhost:5173,https://myapp.com
+     * </pre>
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Convert the List<String> to a plain String[] that Spring MVC expects
+        List<String> origins = properties.cors().allowedOrigins();
+        String[] originsArray = origins.toArray(new String[0]);
+
         registry.addMapping("/agentic-docs/api/**")
-                .allowedOriginPatterns("*")
+                .allowedOrigins(originsArray)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
