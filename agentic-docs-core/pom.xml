@@ -23,12 +23,18 @@
             <scope>provided</scope>
         </dependency>
 
-<dependency>
+        <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-            <version>1.0.0-M6</version>
-            <scope>compile</scope>
-</dependency>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-client-chat</artifactId>
+        </dependency>
         <!-- Spring AI: ChatClient, VectorStore, EmbeddingModel, Document -->
         <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-core -->
         

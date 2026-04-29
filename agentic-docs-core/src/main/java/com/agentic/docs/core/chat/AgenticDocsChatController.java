@@ -66,6 +66,15 @@ public class AgenticDocsChatController {
         return ResponseEntity.ok(apiMetadataScanner.getScannedEndpoints());
     }
 
+    @GetMapping("/chat")
+    public ResponseEntity<ChatResponse> chatInfo() {
+        return ResponseEntity
+                .status(org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new ChatResponse(
+                        "This endpoint only accepts POST requests. " +
+                        "Please use the Agentic Docs UI at /agentic-docs/ or POST a JSON body: {\"question\": \"...\"}"));
+    }
+
     @PostMapping("/chat")
     public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
         if (request.question() == null || request.question().isBlank()) {

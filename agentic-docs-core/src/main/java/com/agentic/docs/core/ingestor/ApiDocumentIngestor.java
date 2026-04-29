@@ -38,7 +38,7 @@ public class ApiDocumentIngestor {
     }
 
     @EventListener(ContextRefreshedEvent.class)
-    @Order(1)
+    @Order(2)  // Must run AFTER ApiMetadataScanner (@Order(1))
     public void ingest() {
         // Guard against duplicate events (parent/child context refreshes)
         if (!ingested.compareAndSet(false, true)) return;
@@ -61,7 +61,13 @@ public class ApiDocumentIngestor {
                 ))
                 .toList();
 
-        vectorStore.add(documents);
-        log.info("[AgenticDocs] Ingested {} endpoint documents into the vector store.", documents.size());
+        try {
+            vectorStore.add(documents);
+            log.info("[AgenticDocs] Ingested {} endpoint documents into the vector store.", documents.size());
+        } catch (Exception ex) {
+            log.warn("[AgenticDocs] Vector store ingestion failed ({}). " +
+                     "API Explorer endpoints will still appear in the UI — only AI chat results may be affected.",
+                     ex.getMessage());
+        }
     }
 }

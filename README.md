@@ -1,6 +1,6 @@
 # Agentic Docs
 
-**Agentic Docs** is a Spring Boot starter that turns static API documentation (like Swagger) into an interactive AI Agent.
+**Agentic Docs** is a Spring Boot starter that turns static API documentation (like Swagger) into an interactive AI Agent — powered by RAG (Retrieval-Augmented Generation).
 
 ---
 
@@ -13,7 +13,9 @@
 - [Running the Sample App](#running-the-sample-app)
 - [Running the UI (Development)](#running-the-ui-development)
 - [Accessing the Agent](#accessing-the-agent)
+- [API Endpoints](#api-endpoints)
 - [Configuration Reference](#configuration-reference)
+- [Known Issues & Fixes](#known-issues--fixes)
 
 ---
 
@@ -26,16 +28,20 @@
 | Node.js | 18+ | Only needed for UI development |
 | Ollama | Latest | Only needed for local LLM — [Download](https://ollama.com/download) |
 
+> **Dependency Versions:** This project uses **Spring Boot 3.4.0** and **Spring AI 1.0.0 GA**.  
+> Do **not** mix Spring AI milestone jars (e.g. `1.0.0-M6`) with GA autoconfigure jars — they are binary-incompatible.
+
 ---
 
 ## Project Structure
 
 ```
 agentic-docs/
-├── agentic-docs-core/              # Core RAG scanning & chat logic
+├── agentic-docs-core/                 # Core RAG scanning & chat logic
 ├── agentic-docs-spring-boot-starter/  # Auto-configuration & bundled UI
-├── agentic-docs-sample-app/        # Runnable demo application
-└── agentic-docs-ui/                # React frontend source (Vite)
+├── agentic-docs-sample-app/           # Runnable demo application
+├── agentic-docs-ui/                   # React frontend source (Vite)
+└── docs/                              # Architecture & engineering docs
 ```
 
 ---
@@ -85,11 +91,15 @@ cd agentic-docs-sample-app
 mvn spring-boot:run
 ```
 
+> ⚠️ **Corporate / Proxy Networks:** If your network uses TLS inspection, the JVM may fail to reach `api.openai.com` with an SSL certificate error.  
+> In this case, use **Option 2 (Ollama)** which runs fully on-premise, or import your corporate CA into the JVM truststore.  
+> The API Explorer tab will still show all endpoints even if the AI chat cannot connect.
+
 ---
 
 ### Option 2 — Ollama (Local, Free)
 
-> Runs entirely on your machine — no API key, no cost.
+> Runs entirely on your machine — no API key, no cost, no SSL issues.
 
 **Step 1:** Install Ollama from [https://ollama.com/download](https://ollama.com/download)
 
@@ -135,7 +145,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=ollama
 
 ## Running the UI (Development)
 
-The starter ships with a **pre-built UI** embedded in the JAR. For UI development only:
+The starter ships with a **pre-built UI** embedded in the JAR — no Node.js needed to run the app.
+
+For UI development only:
 
 ```bash
 cd agentic-docs-ui
@@ -145,7 +157,7 @@ npm run dev
 
 The dev UI runs on **http://localhost:5173** and proxies API calls to `http://localhost:8080`.
 
-To build and bundle the UI into the starter:
+To build and bundle the UI back into the starter:
 ```bash
 npm run build
 ```
@@ -156,9 +168,36 @@ npm run build
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:8080/agentic-docs` | Agentic Docs chat UI |
-| `http://localhost:8080/swagger-ui.html` | Swagger UI (sample app) |
-| `http://localhost:8080/agentic-docs/api/chat` | RAG chat REST endpoint |
+| `http://localhost:8080/` | Redirects to the Agentic Docs UI |
+| `http://localhost:8080/agentic-docs` | Agentic Docs UI — AI Chat + API Explorer |
+| `http://localhost:8080/agentic-docs/` | Same as above (trailing slash) |
+| `http://localhost:8080/swagger-ui.html` | Swagger UI for the sample app |
+| `http://localhost:8080/v3/api-docs` | Raw OpenAPI JSON spec |
+
+---
+
+## API Endpoints
+
+### Agentic Docs REST API
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/agentic-docs/api/endpoints` | Returns JSON list of all scanned REST endpoints |
+| `POST` | `/agentic-docs/api/chat` | RAG chat — body: `{"question": "..."}`, response: `{"answer": "..."}` |
+| `GET` | `/agentic-docs/api/chat` | Returns a helpful message (endpoint only accepts POST) |
+
+### Sample App Endpoints (PaymentsController)
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/v1/subscriptions/{id}` | Get subscription details by ID |
+| `GET` | `/api/v1/accounts/{accountId}/subscriptions` | List all subscriptions for an account |
+| `POST` | `/api/v1/subscriptions/{id}/terminate` | Terminate a subscription with refund type |
+| `PUT` | `/api/v1/subscriptions/{id}/plan` | Upgrade or downgrade a subscription plan |
+| `POST` | `/api/v1/billing/refund/calculate` | Calculate refund amount |
+| `POST` | `/api/v1/payments/process` | Process a payment |
+| `GET` | `/api/v1/accounts/{accountId}/payments` | Get paginated payment history |
+| `POST` | `/api/v1/payments/refund` | Issue a manual refund |
 
 ---
 
@@ -169,44 +208,64 @@ npm run build
 | `spring.profiles.active` | `openai` | LLM provider: `openai` or `ollama` |
 | `agentic.docs.enabled` | `true` | Enable/disable the RAG agent |
 | `SPRING_AI_OPENAI_API_KEY` | *(env var)* | Your OpenAI API key |
-| `spring.ai.ollama.base-url` | `http://localhost:11434` | Ollama server URL |
 | `spring.ai.openai.chat.options.model` | `gpt-4o-mini` | OpenAI chat model |
+| `spring.ai.ollama.base-url` | `http://localhost:11434` | Ollama server URL |
 | `spring.ai.ollama.chat.options.model` | `llama3.2` | Ollama chat model |
+| `spring.ai.ollama.embedding.options.model` | `nomic-embed-text` | Ollama embedding model |
 
 ---
 
+## Known Issues & Fixes
 
+> Full details in [`docs/12-bug-fixes.adoc`](docs/12-bug-fixes.adoc)
 
-### What is it?
+| # | Issue | Fix Applied |
+|---|-------|-------------|
+| 1 | Duplicate `vectorStore` bean on startup | Removed `spring-ai-starter-vector-store-pgvector` (not needed) |
+| 2 | `NoSuchMethodError` on `setObservationConvention` | Removed hardcoded `spring-ai-core:1.0.0-M6` — all versions now governed by `spring-ai-bom:1.0.0` |
+| 3 | `spring-ai-core:1.0.0` not found on Maven Central | Replaced with `spring-ai-model` + `spring-ai-vector-store` + `spring-ai-client-chat` (GA split artifacts) |
+| 4 | HTTP 405 on `/agentic-docs/api/chat` | Added `WebMvcConfigurer` with CORS + `@Qualifier` on `RequestMappingHandlerMapping` + `GET /chat` fallback handler |
+| 5 | HTTP 404 on `/agentic-docs` (no trailing slash) | Added `forward:/agentic-docs/index.html` view controllers for `/`, `/agentic-docs`, `/agentic-docs/` |
+| 6 | Endpoints not appearing in API Explorer | Fixed overly broad package filter (`com.agentic.docs` → specific internal packages only) |
+| 7 | Ingestor ran before scanner (empty endpoint list) | Fixed `@Order`: scanner `@Order(1)`, ingestor `@Order(2)` |
+| 8 | App crash on startup due to SSL/TLS error | Wrapped `vectorStore.add()` in try-catch — API Explorer always works even if AI chat cannot connect |
+
+---
+
+## What is it?
+
 Standard API docs are just lists of endpoints. This tool embeds a **RAG (Retrieval-Augmented Generation) Agent** directly into your browser. Instead of searching through long tables, you can ask the documentation questions in plain English.
 
 ### The Core Idea
 If a developer wants to know:
 > *"How do I implement a partial refund using these APIs?"*
 
-The agent reads your project's logic and generates the specific **React** or **Java** code snippets needed to make it work.
+The agent reads your project's REST endpoints and generates the specific **React** or **Java** code snippets needed to make it work.
 
-###  Tech Stack
-* **Backend:** Java 21 & Spring Boot 3
-* **AI:** Spring AI (for RAG and LLM orchestration)
-* **Frontend:** React (for the chat UI)
-* **Database:** Vector Store (to index your API endpoints)
+### Tech Stack
 
+| Layer | Technology |
+|-------|-----------|
+| Backend | Java 21 + Spring Boot 3.4.0 |
+| AI / RAG | Spring AI 1.0.0 GA |
+| LLM (cloud) | OpenAI `gpt-4o-mini` |
+| LLM (local) | Ollama `llama3.2` + `nomic-embed-text` |
+| Vector Store | Spring AI `SimpleVectorStore` (in-memory) |
+| Frontend | React 18 + Vite + Tailwind CSS |
 
 ### Why use this?
 In large companies, developers waste hours trying to understand complex internal APIs. This project solves that by creating a "Pair Programmer" that lives inside your documentation.
 
 ---
+
 *Built for the 2026 Open Source Community.*
 
+---
 
+## Use Case: Streamlining Microservice Integration
 
-
-
-# Use Case: Streamlining Microservice Integration
-
-###  The Environment
-Imagine a senior developer at working on a "Payments & Ledger" microservice. The service has over **150+ endpoints**, complex DTO inheritance, and legacy documentation that hasn't been updated in months.
+### The Environment
+Imagine a senior developer working on a "Payments & Ledger" microservice. The service has over **150+ endpoints**, complex DTO inheritance, and legacy documentation that hasn't been updated in months.
 
 ### The Problem (Traditional Workflow)
 A new developer needs to implement a **Conditional Subscription Cancellation**.
@@ -218,7 +277,7 @@ A new developer needs to implement a **Conditional Subscription Cancellation**.
 ---
 
 ### The Solution (Agentic Docs Workflow)
-The developer opens the `/agentic-docs` portal powered by your Spring Boot starter.
+The developer opens `http://localhost:8080/agentic-docs` powered by the Spring Boot starter.
 
 #### 1. Contextual Inquiry
 The developer types into the embedded chat:
@@ -226,9 +285,9 @@ The developer types into the embedded chat:
 
 #### 2. Agentic Reasoning
 The **Agentic Docs** engine performs the following:
-* **Vector Search:** Finds the `/subscriptions/{id}/terminate` and `/billing/refund/calculate` endpoints.
-* **Code Analysis:** Scans the `@Service` layer to see that the `CancellationRequest` DTO requires an `isProrated` boolean.
-* **Logic Synthesis:** Realizes that a "15-day check" is a business logic requirement often handled by the `AccountService`.
+- **Vector Search:** Finds the `/subscriptions/{id}/terminate` and `/billing/refund/calculate` endpoints.
+- **Context Injection:** Reads the endpoint summaries and request body schemas from the indexed documents.
+- **Logic Synthesis:** Combines the two endpoints to produce a complete implementation.
 
 #### 3. Instant Implementation
 The agent responds with a step-by-step guide and code:
@@ -238,12 +297,13 @@ The agent responds with a step-by-step guide and code:
 // Generated by Agentic Docs Agent
 public void handleSmartCancellation(String subId) {
     Subscription sub = subscriptionClient.getDetails(subId);
-    
+
     // Logic based on your 15-day requirement
     boolean isEligible = sub.getDaysActive() < 15;
-    
+
     TerminationRequest request = new TerminationRequest();
     request.setRefundType(isEligible ? "PARTIAL" : "NONE");
-    
+
     apiClient.terminateSubscription(subId, request);
 }
+```

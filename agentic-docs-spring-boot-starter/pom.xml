@@ -29,24 +29,14 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-model -->
         <dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
-    <version>1.0.4</version>
-    <scope>compile</scope>
-</dependency>
-
-<!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-core -->
-<dependency>
-    <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-core</artifactId>
-    <version>1.0.0-M6</version>
-    <scope>compile</scope>
-</dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
 
         <!-- In-memory vector store — used by both providers -->
-        <!-- optional: host apps should not inherit this on their compile classpath -->
-        <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-starter-vector-store-pgvector -->
+
 
         <!--
             Generates spring-autoconfigure-metadata.properties at build time.

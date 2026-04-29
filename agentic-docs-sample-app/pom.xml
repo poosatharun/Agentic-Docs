@@ -23,9 +23,7 @@
 
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-            <version>1.0.0-M6</version>
-            <scope>compile</scope>
+            <artifactId>spring-ai-model</artifactId>
         </dependency>
 
         <!-- The starter wires up all Agentic Docs beans automatically -->

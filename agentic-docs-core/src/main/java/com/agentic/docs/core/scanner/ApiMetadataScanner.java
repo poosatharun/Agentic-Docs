@@ -2,8 +2,10 @@ package com.agentic.docs.core.scanner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationListener;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -15,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 /**
  * Listens for {@link ContextRefreshedEvent} and uses {@link RequestMappingHandlerMapping}
  * to discover every {@code @RestController} endpoint in the host application.
@@ -24,20 +25,24 @@ import java.util.Set;
  * does not have a hard compile-time dependency on springdoc.</p>
  */
 @Component
-public class ApiMetadataScanner implements ApplicationListener<ContextRefreshedEvent> {
+public class ApiMetadataScanner {
 
     private static final Logger log = LoggerFactory.getLogger(ApiMetadataScanner.class);
 
-    private static final String SELF_PACKAGE_PREFIX = "com.agentic.docs";
+    private static final List<String> INTERNAL_PACKAGE_PREFIXES = List.of(
+            "com.agentic.docs.core",
+            "com.agentic.docs.autoconfigure"
+    );
 
     private final RequestMappingHandlerMapping handlerMapping;
     private volatile List<ApiEndpointMetadata> scannedEndpoints = Collections.emptyList();
 
-    public ApiMetadataScanner(RequestMappingHandlerMapping handlerMapping) {
+    public ApiMetadataScanner(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
         this.handlerMapping = handlerMapping;
     }
 
-    @Override
+    @EventListener(ContextRefreshedEvent.class)
+    @Order(1)  // Must run BEFORE ApiDocumentIngestor (@Order(2))
     public void onApplicationEvent(ContextRefreshedEvent event) {
         // Guard against duplicate events fired in parent/child contexts
         if (!scannedEndpoints.isEmpty()) return;
@@ -55,7 +60,8 @@ public class ApiMetadataScanner implements ApplicationListener<ContextRefreshedE
                     org.springframework.web.bind.annotation.RestController.class)) {
                 continue;
             }
-            if (beanType.getName().startsWith(SELF_PACKAGE_PREFIX)) {
+            if (beanType.getName().startsWith(INTERNAL_PACKAGE_PREFIXES.get(0)) ||
+                beanType.getName().startsWith(INTERNAL_PACKAGE_PREFIXES.get(1))) {
                 continue;
             }
 
