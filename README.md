@@ -1,6 +1,5 @@
-# Agentic Docs
 
-**Agentic Docs** is a Spring Boot starter that turns static API documentation (like Swagger) into an interactive AI Agent — powered by RAG (Retrieval-Augmented Generation).
+Agentic Docs is a Spring Boot starter that turns static API documentation (like Swagger) into an interactive AI Agent — powered by RAG (Retrieval-Augmented Generation).
 
 ---
 
@@ -29,8 +28,7 @@
 | Node.js | 18+ | Only needed for UI development |
 | Ollama | Latest | Only needed for local LLM — [Download](https://ollama.com/download) |
 
-> **Dependency Versions:** This project uses **Spring Boot 3.4.0** and **Spring AI 1.0.0 GA**.  
-> Do **not** mix Spring AI milestone jars (e.g. `1.0.0-M6`) with GA autoconfigure jars — they are binary-incompatible.
+
 
 ---
 
@@ -237,13 +235,7 @@ The same fields are also injected into the LLM context, so the AI gives more acc
 
 ---
 
-## Known Issues & Fixes
 
-> Full details in [`docs/12-bug-fixes.adoc`](docs/12-bug-fixes.adoc)
-
-| # | Issue | Fix Applied |
-|---|-------|-------------|
-| 1 | Duplicate `vectorStore` bean on startup | Removed `spring-ai-starter-vector-store-pgvector` (not needed) |
 | 2 | `NoSuchMethodError` on `setObservationConvention` | Removed hardcoded `spring-ai-core:1.0.0-M6` — all versions now governed by `spring-ai-bom:1.0.0` |
 | 3 | `spring-ai-core:1.0.0` not found on Maven Central | Replaced with `spring-ai-model` + `spring-ai-vector-store` + `spring-ai-client-chat` (GA split artifacts) |
 | 4 | HTTP 405 on `/agentic-docs/api/chat` | Added `WebMvcConfigurer` with CORS + `@Qualifier` on `RequestMappingHandlerMapping` + `GET /chat` fallback handler |
