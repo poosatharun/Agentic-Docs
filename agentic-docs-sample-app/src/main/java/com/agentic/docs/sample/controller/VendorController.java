@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/vendors")
-@Tag(name = "Vendor & Supplier Management")
 public class VendorController {
 
-    @Operation(summary = "Onboard a new vendor. Request body: { companyName, contactEmail, contactPhone, address, taxId, paymentTerms, categories }")
     @PostMapping
     public ResponseEntity<Map<String, Object>> createVendor(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -27,7 +23,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "Get vendor details by vendorId including contracts, payment terms, and performance score")
     @GetMapping("/{vendorId}")
     public ResponseEntity<Map<String, Object>> getVendor(@PathVariable String vendorId) {
         return ResponseEntity.ok(Map.of(
@@ -40,7 +35,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "Update vendor profile. Request body: { contactEmail, contactPhone, address, paymentTerms }")
     @PutMapping("/{vendorId}")
     public ResponseEntity<Map<String, Object>> updateVendor(
             @PathVariable String vendorId,
@@ -48,7 +42,6 @@ public class VendorController {
         return ResponseEntity.ok(Map.of("vendorId", vendorId, "updated", true));
     }
 
-    @Operation(summary = "Approve or reject a vendor application. Request body: { decision: APPROVED|REJECTED, notes }")
     @PostMapping("/{vendorId}/review")
     public ResponseEntity<Map<String, Object>> reviewVendor(
             @PathVariable String vendorId,
@@ -56,7 +49,6 @@ public class VendorController {
         return ResponseEntity.ok(Map.of("vendorId", vendorId, "status", request.getOrDefault("decision", "PENDING")));
     }
 
-    @Operation(summary = "Create a purchase order for a vendor. Request body: { vendorId, items: [{sku, quantity, unitCost}], deliveryDate, warehouseId, notes }")
     @PostMapping("/purchase-orders")
     public ResponseEntity<Map<String, Object>> createPurchaseOrder(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -67,7 +59,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "Get purchase order details by poId")
     @GetMapping("/purchase-orders/{poId}")
     public ResponseEntity<Map<String, Object>> getPurchaseOrder(@PathVariable String poId) {
         return ResponseEntity.ok(Map.of(
@@ -79,7 +70,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "List purchase orders. Query params: vendorId, status, fromDate, toDate, page, size")
     @GetMapping("/purchase-orders")
     public ResponseEntity<Map<String, Object>> listPurchaseOrders(
             @RequestParam(required = false) String vendorId,
@@ -89,7 +79,6 @@ public class VendorController {
         return ResponseEntity.ok(Map.of("purchaseOrders", List.of(), "total", 0));
     }
 
-    @Operation(summary = "Get vendor performance scorecard. Query params: vendorId, fromDate, toDate")
     @GetMapping("/{vendorId}/scorecard")
     public ResponseEntity<Map<String, Object>> getScorecard(
             @PathVariable String vendorId,
@@ -105,7 +94,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "Upload and attach a vendor contract document. Request body: { vendorId, contractType, startDate, endDate, fileUrl }")
     @PostMapping("/{vendorId}/contracts")
     public ResponseEntity<Map<String, Object>> uploadContract(
             @PathVariable String vendorId,
@@ -118,7 +106,6 @@ public class VendorController {
         ));
     }
 
-    @Operation(summary = "Process a vendor invoice and schedule payment. Request body: { vendorId, poId, invoiceNumber, amount, currency, dueDate, lineItems }")
     @PostMapping("/invoices")
     public ResponseEntity<Map<String, Object>> processInvoice(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(

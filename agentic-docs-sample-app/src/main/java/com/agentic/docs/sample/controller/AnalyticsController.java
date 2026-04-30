@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/analytics")
-@Tag(name = "Reporting & Analytics")
 public class AnalyticsController {
 
-    @Operation(summary = "Get revenue summary for a date range. Query params: fromDate, toDate, groupBy: DAY|WEEK|MONTH, currency")
     @GetMapping("/revenue")
     public ResponseEntity<Map<String, Object>> getRevenue(
             @RequestParam String fromDate,
@@ -32,7 +28,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Get top-selling products report. Query params: fromDate, toDate, limit, category")
     @GetMapping("/products/top-selling")
     public ResponseEntity<Map<String, Object>> getTopSellingProducts(
             @RequestParam(required = false) String fromDate,
@@ -42,7 +37,6 @@ public class AnalyticsController {
         return ResponseEntity.ok(Map.of("products", List.of(), "period", Map.of("from", fromDate, "to", toDate)));
     }
 
-    @Operation(summary = "Get customer acquisition and churn metrics. Query params: fromDate, toDate, segment")
     @GetMapping("/customers/metrics")
     public ResponseEntity<Map<String, Object>> getCustomerMetrics(
             @RequestParam(required = false) String fromDate,
@@ -56,7 +50,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Get order fulfilment and SLA metrics. Query params: fromDate, toDate, warehouseId")
     @GetMapping("/fulfilment/metrics")
     public ResponseEntity<Map<String, Object>> getFulfilmentMetrics(
             @RequestParam(required = false) String fromDate,
@@ -70,7 +63,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Get real-time dashboard KPIs snapshot — orders, revenue, active users, stock alerts")
     @GetMapping("/dashboard/kpis")
     public ResponseEntity<Map<String, Object>> getDashboardKpis() {
         return ResponseEntity.ok(Map.of(
@@ -83,7 +75,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Export a report as CSV or Excel. Request body: { reportType: REVENUE|ORDERS|CUSTOMERS|INVENTORY, fromDate, toDate, format: CSV|XLSX }")
     @PostMapping("/reports/export")
     public ResponseEntity<Map<String, Object>> exportReport(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -94,7 +85,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Download a previously generated report export by exportId")
     @GetMapping("/reports/export/{exportId}/download")
     public ResponseEntity<Map<String, Object>> downloadExport(@PathVariable String exportId) {
         return ResponseEntity.ok(Map.of(
@@ -104,7 +94,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Schedule a recurring report. Request body: { reportType, schedule: DAILY|WEEKLY|MONTHLY, recipients, format, filters }")
     @PostMapping("/reports/schedule")
     public ResponseEntity<Map<String, Object>> scheduleReport(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -115,7 +104,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Get cohort retention analysis. Query params: cohortMonth (YYYY-MM), periods (number of months)")
     @GetMapping("/customers/cohort-retention")
     public ResponseEntity<Map<String, Object>> getCohortRetention(
             @RequestParam String cohortMonth,
@@ -126,7 +114,6 @@ public class AnalyticsController {
         ));
     }
 
-    @Operation(summary = "Get payment failure analysis — decline rates by reason, card type, and geography. Query params: fromDate, toDate")
     @GetMapping("/payments/failure-analysis")
     public ResponseEntity<Map<String, Object>> getPaymentFailureAnalysis(
             @RequestParam(required = false) String fromDate,

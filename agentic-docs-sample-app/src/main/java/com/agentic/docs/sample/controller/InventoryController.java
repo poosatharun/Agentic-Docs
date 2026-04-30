@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/inventory")
-@Tag(name = "Inventory & Warehouse")
 public class InventoryController {
 
-    @Operation(summary = "Get current stock levels across all warehouses for a SKU. Query params: sku, warehouseId")
     @GetMapping("/stock")
     public ResponseEntity<Map<String, Object>> getStockLevels(
             @RequestParam(required = false) String sku,
@@ -32,7 +28,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "Create a stock transfer between two warehouses. Request body: { sku, fromWarehouseId, toWarehouseId, quantity, priority }")
     @PostMapping("/transfers")
     public ResponseEntity<Map<String, Object>> createTransfer(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -42,7 +37,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "Get transfer details and status by transferId")
     @GetMapping("/transfers/{transferId}")
     public ResponseEntity<Map<String, Object>> getTransfer(@PathVariable String transferId) {
         return ResponseEntity.ok(Map.of(
@@ -53,7 +47,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "List all warehouses with location, capacity, and current utilisation")
     @GetMapping("/warehouses")
     public ResponseEntity<Map<String, Object>> listWarehouses() {
         return ResponseEntity.ok(Map.of("warehouses", List.of(
@@ -62,7 +55,6 @@ public class InventoryController {
         )));
     }
 
-    @Operation(summary = "Perform a stock adjustment (damage, loss, audit). Request body: { sku, warehouseId, delta, reason: DAMAGE|LOSS|AUDIT|RETURN }")
     @PostMapping("/adjustments")
     public ResponseEntity<Map<String, Object>> adjustStock(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -73,7 +65,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "Get low-stock alerts for SKUs below their reorder threshold. Query params: warehouseId, threshold")
     @GetMapping("/alerts/low-stock")
     public ResponseEntity<Map<String, Object>> getLowStockAlerts(
             @RequestParam(required = false) String warehouseId,
@@ -81,13 +72,11 @@ public class InventoryController {
         return ResponseEntity.ok(Map.of("alerts", List.of(), "threshold", threshold));
     }
 
-    @Operation(summary = "Set the reorder threshold for a SKU at a warehouse. Request body: { sku, warehouseId, threshold, reorderQuantity }")
     @PutMapping("/reorder-rules")
     public ResponseEntity<Map<String, Object>> setReorderRule(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("ruleId", UUID.randomUUID().toString(), "saved", true));
     }
 
-    @Operation(summary = "Get inventory valuation report for a warehouse or all warehouses. Query params: warehouseId, valuationMethod: FIFO|LIFO|AVERAGE")
     @GetMapping("/reports/valuation")
     public ResponseEntity<Map<String, Object>> getValuationReport(
             @RequestParam(required = false) String warehouseId,
@@ -100,7 +89,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "Receive a supplier shipment into a warehouse. Request body: { purchaseOrderId, warehouseId, items: [{sku, receivedQty}] }")
     @PostMapping("/receipts")
     public ResponseEntity<Map<String, Object>> receiveShipment(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -110,7 +98,6 @@ public class InventoryController {
         ));
     }
 
-    @Operation(summary = "Get inventory movement history for a SKU. Query params: sku, warehouseId, fromDate, toDate, page, size")
     @GetMapping("/movements")
     public ResponseEntity<Map<String, Object>> getMovements(
             @RequestParam(required = false) String sku,

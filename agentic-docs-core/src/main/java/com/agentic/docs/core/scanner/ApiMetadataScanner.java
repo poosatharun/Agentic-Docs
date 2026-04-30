@@ -28,9 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Listens for {@link ContextRefreshedEvent} and uses {@link RequestMappingHandlerMapping}
  * to discover every {@code @RestController} endpoint in the host application.
- *
- * <p>Swagger {@code @Operation} summaries are read reflectively so that the core module
- * does not have a hard compile-time dependency on springdoc.</p>
  */
 @Component
 public class ApiMetadataScanner {
@@ -170,23 +167,10 @@ public class ApiMetadataScanner {
     }
 
     /**
-     * Reads the {@code @Operation(summary = "...")} annotation reflectively.
-     * Falls back to the method name if springdoc is not on the classpath.
+     * Returns the method name as a human-readable description.
+     * Override this method to plug in a custom description source.
      */
     private String extractDescription(Method method) {
-        try {
-            Class<?> operationAnnotation = Class.forName("io.swagger.v3.oas.annotations.Operation");
-            Object annotation = method.getAnnotation(
-                    operationAnnotation.asSubclass(java.lang.annotation.Annotation.class));
-            if (annotation != null) {
-                String summary = (String) operationAnnotation.getMethod("summary").invoke(annotation);
-                if (summary != null && !summary.isBlank()) return summary;
-                String desc = (String) operationAnnotation.getMethod("description").invoke(annotation);
-                if (desc != null && !desc.isBlank()) return desc;
-            }
-        } catch (Exception ignored) {
-            // springdoc not on classpath — that's fine
-        }
-        return "No description provided.";
+        return method.getName();
     }
 }

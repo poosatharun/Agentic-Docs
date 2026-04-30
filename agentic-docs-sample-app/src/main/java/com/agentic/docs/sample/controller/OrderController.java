@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/orders")
-@Tag(name = "Order Management")
 public class OrderController {
 
-    @Operation(summary = "Create a new order. Request body: { customerId, items: [{productId, quantity, unitPrice}], shippingAddress, paymentMethodId }")
     @PostMapping
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -27,7 +23,6 @@ public class OrderController {
         ));
     }
 
-    @Operation(summary = "Get order details by orderId including items, status, and tracking info")
     @GetMapping("/{orderId}")
     public ResponseEntity<Map<String, Object>> getOrder(@PathVariable String orderId) {
         return ResponseEntity.ok(Map.of(
@@ -39,7 +34,6 @@ public class OrderController {
         ));
     }
 
-    @Operation(summary = "List all orders for a customer. Query params: status, page, size, fromDate, toDate")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<Map<String, Object>> getCustomerOrders(
             @PathVariable String customerId,
@@ -49,7 +43,6 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("customerId", customerId, "orders", List.of(), "total", 0));
     }
 
-    @Operation(summary = "Cancel an order. Only PENDING or PROCESSING orders can be cancelled. Request body: { reason }")
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<Map<String, Object>> cancelOrder(
             @PathVariable String orderId,
@@ -57,7 +50,6 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("orderId", orderId, "status", "CANCELLED", "refundInitiated", true));
     }
 
-    @Operation(summary = "Update shipping address for a PENDING order. Request body: { street, city, state, zip, country }")
     @PutMapping("/{orderId}/shipping-address")
     public ResponseEntity<Map<String, Object>> updateShippingAddress(
             @PathVariable String orderId,
@@ -65,7 +57,6 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("orderId", orderId, "addressUpdated", true));
     }
 
-    @Operation(summary = "Initiate a return for a delivered order. Request body: { items: [{orderItemId, quantity, reason}] }")
     @PostMapping("/{orderId}/return")
     public ResponseEntity<Map<String, Object>> initiateReturn(
             @PathVariable String orderId,
@@ -78,7 +69,6 @@ public class OrderController {
         ));
     }
 
-    @Operation(summary = "Get live tracking status for a shipped order")
     @GetMapping("/{orderId}/tracking")
     public ResponseEntity<Map<String, Object>> getTracking(@PathVariable String orderId) {
         return ResponseEntity.ok(Map.of(
@@ -93,7 +83,6 @@ public class OrderController {
         ));
     }
 
-    @Operation(summary = "Apply a discount coupon to a pending order. Request body: { couponCode }")
     @PostMapping("/{orderId}/apply-coupon")
     public ResponseEntity<Map<String, Object>> applyCoupon(
             @PathVariable String orderId,
@@ -101,7 +90,6 @@ public class OrderController {
         return ResponseEntity.ok(Map.of("orderId", orderId, "discount", 10.00, "newTotal", 49.98));
     }
 
-    @Operation(summary = "Get order invoice as a downloadable link")
     @GetMapping("/{orderId}/invoice")
     public ResponseEntity<Map<String, Object>> getInvoice(@PathVariable String orderId) {
         return ResponseEntity.ok(Map.of(
@@ -111,7 +99,6 @@ public class OrderController {
         ));
     }
 
-    @Operation(summary = "Reorder — clone a previous order into a new PENDING order")
     @PostMapping("/{orderId}/reorder")
     public ResponseEntity<Map<String, Object>> reorder(@PathVariable String orderId) {
         return ResponseEntity.status(201).body(Map.of(

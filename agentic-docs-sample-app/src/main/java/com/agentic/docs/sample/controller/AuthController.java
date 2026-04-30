@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication & Authorization")
 public class AuthController {
 
-    @Operation(summary = "Login with email and password. Request body: { email, password, deviceId }. Returns accessToken and refreshToken.")
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -28,7 +24,6 @@ public class AuthController {
         ));
     }
 
-    @Operation(summary = "Refresh an expired access token using a valid refresh token. Request body: { refreshToken }")
     @PostMapping("/token/refresh")
     public ResponseEntity<Map<String, Object>> refreshToken(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -38,25 +33,21 @@ public class AuthController {
         ));
     }
 
-    @Operation(summary = "Logout and invalidate the current access token. Request body: { refreshToken }")
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("loggedOut", true));
     }
 
-    @Operation(summary = "Initiate password reset — sends a reset link to the registered email. Request body: { email }")
     @PostMapping("/password/forgot")
     public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("message", "Reset link sent", "email", request.getOrDefault("email", "")));
     }
 
-    @Operation(summary = "Reset password using the token from the email link. Request body: { token, newPassword }")
     @PostMapping("/password/reset")
     public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("passwordReset", true));
     }
 
-    @Operation(summary = "Enable MFA for an account. Returns a TOTP QR code URL and secret. Request body: { userId, method: TOTP|SMS }")
     @PostMapping("/mfa/enable")
     public ResponseEntity<Map<String, Object>> enableMfa(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -67,13 +58,11 @@ public class AuthController {
         ));
     }
 
-    @Operation(summary = "Verify MFA code to complete MFA setup or login. Request body: { userId, code }")
     @PostMapping("/mfa/verify")
     public ResponseEntity<Map<String, Object>> verifyMfa(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("verified", true, "mfaFullyEnabled", true));
     }
 
-    @Operation(summary = "Create an API key for programmatic access. Request body: { userId, name, scopes, expiresAt }")
     @PostMapping("/api-keys")
     public ResponseEntity<Map<String, Object>> createApiKey(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -84,7 +73,6 @@ public class AuthController {
         ));
     }
 
-    @Operation(summary = "List all API keys for a user. Query params: userId, active")
     @GetMapping("/api-keys")
     public ResponseEntity<Map<String, Object>> listApiKeys(
             @RequestParam String userId,
@@ -92,7 +80,6 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("userId", userId, "apiKeys", List.of()));
     }
 
-    @Operation(summary = "Revoke (delete) an API key permanently")
     @DeleteMapping("/api-keys/{keyId}")
     public ResponseEntity<Map<String, Object>> revokeApiKey(@PathVariable String keyId) {
         return ResponseEntity.ok(Map.of("keyId", keyId, "revoked", true));

@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/promotions")
-@Tag(name = "Promotions & Coupons")
 public class PromotionController {
 
-    @Operation(summary = "Create a new promotion campaign. Request body: { name, type: PERCENTAGE|FIXED|FREE_SHIPPING|BUY_X_GET_Y, value, conditions, startDate, endDate, maxUses }")
     @PostMapping("/campaigns")
     public ResponseEntity<Map<String, Object>> createCampaign(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -27,7 +23,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "Get campaign details by campaignId including usage stats")
     @GetMapping("/campaigns/{campaignId}")
     public ResponseEntity<Map<String, Object>> getCampaign(@PathVariable String campaignId) {
         return ResponseEntity.ok(Map.of(
@@ -41,7 +36,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "List all campaigns. Query params: status (ACTIVE|SCHEDULED|EXPIRED), page, size")
     @GetMapping("/campaigns")
     public ResponseEntity<Map<String, Object>> listCampaigns(
             @RequestParam(required = false) String status,
@@ -50,13 +44,11 @@ public class PromotionController {
         return ResponseEntity.ok(Map.of("campaigns", List.of(), "total", 0));
     }
 
-    @Operation(summary = "Deactivate a campaign immediately")
     @PostMapping("/campaigns/{campaignId}/deactivate")
     public ResponseEntity<Map<String, Object>> deactivateCampaign(@PathVariable String campaignId) {
         return ResponseEntity.ok(Map.of("campaignId", campaignId, "status", "DEACTIVATED"));
     }
 
-    @Operation(summary = "Generate bulk coupon codes for a campaign. Request body: { campaignId, count, prefix, expiresAt }")
     @PostMapping("/coupons/generate")
     public ResponseEntity<Map<String, Object>> generateCoupons(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -67,7 +59,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "Validate a coupon code for a cart. Request body: { couponCode, cartTotal, customerId, items }")
     @PostMapping("/coupons/validate")
     public ResponseEntity<Map<String, Object>> validateCoupon(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -78,7 +69,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "Get coupon usage history. Query params: couponCode, fromDate, toDate, page, size")
     @GetMapping("/coupons/usage")
     public ResponseEntity<Map<String, Object>> getCouponUsage(
             @RequestParam(required = false) String couponCode,
@@ -89,7 +79,6 @@ public class PromotionController {
         return ResponseEntity.ok(Map.of("usages", List.of(), "total", 0));
     }
 
-    @Operation(summary = "Get loyalty points balance and tier for a customer. Query params: customerId")
     @GetMapping("/loyalty/points")
     public ResponseEntity<Map<String, Object>> getLoyaltyPoints(@RequestParam String customerId) {
         return ResponseEntity.ok(Map.of(
@@ -102,7 +91,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "Redeem loyalty points for a discount. Request body: { customerId, points, orderId }")
     @PostMapping("/loyalty/redeem")
     public ResponseEntity<Map<String, Object>> redeemLoyaltyPoints(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -113,7 +101,6 @@ public class PromotionController {
         ));
     }
 
-    @Operation(summary = "Create a flash sale for specific products or categories. Request body: { name, productIds, discountPercentage, startTime, endTime, maxUnitsPerCustomer }")
     @PostMapping("/flash-sales")
     public ResponseEntity<Map<String, Object>> createFlashSale(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(

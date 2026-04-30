@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/support")
-@Tag(name = "Customer Support")
 public class SupportController {
 
-    @Operation(summary = "Create a support ticket. Request body: { customerId, subject, description, priority: LOW|MEDIUM|HIGH|CRITICAL, category, orderId }")
     @PostMapping("/tickets")
     public ResponseEntity<Map<String, Object>> createTicket(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -28,7 +24,6 @@ public class SupportController {
         ));
     }
 
-    @Operation(summary = "Get ticket details by ticketId including conversation history")
     @GetMapping("/tickets/{ticketId}")
     public ResponseEntity<Map<String, Object>> getTicket(@PathVariable String ticketId) {
         return ResponseEntity.ok(Map.of(
@@ -42,7 +37,6 @@ public class SupportController {
         ));
     }
 
-    @Operation(summary = "Add a reply to a support ticket. Request body: { message, attachments, isInternal (agent note) }")
     @PostMapping("/tickets/{ticketId}/reply")
     public ResponseEntity<Map<String, Object>> replyToTicket(
             @PathVariable String ticketId,
@@ -50,7 +44,6 @@ public class SupportController {
         return ResponseEntity.ok(Map.of("ticketId", ticketId, "messageId", UUID.randomUUID().toString(), "sent", true));
     }
 
-    @Operation(summary = "Update ticket status. Request body: { status: OPEN|IN_PROGRESS|WAITING|RESOLVED|CLOSED, resolution }")
     @PatchMapping("/tickets/{ticketId}/status")
     public ResponseEntity<Map<String, Object>> updateStatus(
             @PathVariable String ticketId,
@@ -58,7 +51,6 @@ public class SupportController {
         return ResponseEntity.ok(Map.of("ticketId", ticketId, "status", request.getOrDefault("status", "OPEN")));
     }
 
-    @Operation(summary = "Escalate a ticket to a senior agent or manager. Request body: { reason, escalateTo: TIER2|MANAGER|ENGINEERING }")
     @PostMapping("/tickets/{ticketId}/escalate")
     public ResponseEntity<Map<String, Object>> escalateTicket(
             @PathVariable String ticketId,
@@ -70,7 +62,6 @@ public class SupportController {
         ));
     }
 
-    @Operation(summary = "List tickets for a customer. Query params: customerId, status, priority, page, size")
     @GetMapping("/tickets")
     public ResponseEntity<Map<String, Object>> listTickets(
             @RequestParam(required = false) String customerId,
@@ -81,7 +72,6 @@ public class SupportController {
         return ResponseEntity.ok(Map.of("tickets", List.of(), "total", 0));
     }
 
-    @Operation(summary = "Get support SLA metrics — first response time, resolution time, breach rate. Query params: fromDate, toDate, agentId")
     @GetMapping("/sla/metrics")
     public ResponseEntity<Map<String, Object>> getSlaMetrics(
             @RequestParam(required = false) String fromDate,
@@ -95,7 +85,6 @@ public class SupportController {
         ));
     }
 
-    @Operation(summary = "Search the knowledge base for self-service articles. Query params: q, category, page, size")
     @GetMapping("/knowledge-base/search")
     public ResponseEntity<Map<String, Object>> searchKnowledgeBase(
             @RequestParam String q,
@@ -105,7 +94,6 @@ public class SupportController {
         return ResponseEntity.ok(Map.of("articles", List.of(), "total", 0, "query", q));
     }
 
-    @Operation(summary = "Create or update a knowledge base article. Request body: { title, body, category, tags, published }")
     @PutMapping("/knowledge-base/articles/{articleId}")
     public ResponseEntity<Map<String, Object>> upsertArticle(
             @PathVariable String articleId,
@@ -113,7 +101,6 @@ public class SupportController {
         return ResponseEntity.ok(Map.of("articleId", articleId, "saved", true, "published", request.getOrDefault("published", false)));
     }
 
-    @Operation(summary = "Get agent performance summary — tickets handled, avg rating, resolution rate. Query params: agentId, fromDate, toDate")
     @GetMapping("/agents/{agentId}/performance")
     public ResponseEntity<Map<String, Object>> getAgentPerformance(
             @PathVariable String agentId,

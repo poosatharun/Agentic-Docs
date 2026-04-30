@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/shipping")
-@Tag(name = "Shipping & Logistics")
 public class ShippingController {
 
-    @Operation(summary = "Get shipping rates for a package. Request body: { fromZip, toZip, weightKg, dimensionsCm: {l,w,h}, carriers }")
     @PostMapping("/rates")
     public ResponseEntity<Map<String, Object>> getShippingRates(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of("rates", List.of(
@@ -27,7 +23,6 @@ public class ShippingController {
         )));
     }
 
-    @Operation(summary = "Create a shipment and generate a shipping label. Request body: { orderId, carrierId, serviceCode, fromAddress, toAddress, packageDetails }")
     @PostMapping("/shipments")
     public ResponseEntity<Map<String, Object>> createShipment(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -39,7 +34,6 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Get shipment details and current status by shipmentId")
     @GetMapping("/shipments/{shipmentId}")
     public ResponseEntity<Map<String, Object>> getShipment(@PathVariable String shipmentId) {
         return ResponseEntity.ok(Map.of(
@@ -51,13 +45,11 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Void (cancel) a shipment label before it is scanned by the carrier")
     @DeleteMapping("/shipments/{shipmentId}")
     public ResponseEntity<Map<String, Object>> voidShipment(@PathVariable String shipmentId) {
         return ResponseEntity.ok(Map.of("shipmentId", shipmentId, "voided", true, "refunded", true));
     }
 
-    @Operation(summary = "Track a shipment by tracking number. Query params: carrier, trackingNumber")
     @GetMapping("/track")
     public ResponseEntity<Map<String, Object>> trackByNumber(
             @RequestParam String carrier,
@@ -72,7 +64,6 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Create a return label for a delivered shipment. Request body: { orderId, shipmentId, reason, fromAddress }")
     @PostMapping("/returns/label")
     public ResponseEntity<Map<String, Object>> createReturnLabel(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(
@@ -82,7 +73,6 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Get all carrier accounts configured in the system")
     @GetMapping("/carriers")
     public ResponseEntity<Map<String, Object>> getCarriers() {
         return ResponseEntity.ok(Map.of("carriers", List.of(
@@ -92,7 +82,6 @@ public class ShippingController {
         )));
     }
 
-    @Operation(summary = "Get delivery performance report by carrier. Query params: fromDate, toDate, carrier")
     @GetMapping("/reports/performance")
     public ResponseEntity<Map<String, Object>> getCarrierPerformance(
             @RequestParam(required = false) String fromDate,
@@ -106,7 +95,6 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Get shipping zones and transit times between origin and destination zips. Query params: fromZip, toZip")
     @GetMapping("/zones")
     public ResponseEntity<Map<String, Object>> getShippingZone(
             @RequestParam String fromZip,
@@ -119,7 +107,6 @@ public class ShippingController {
         ));
     }
 
-    @Operation(summary = "Bulk create shipments from a list of orders. Request body: { orderIds, carrierId, serviceCode }")
     @PostMapping("/shipments/bulk")
     public ResponseEntity<Map<String, Object>> bulkCreateShipments(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(Map.of(

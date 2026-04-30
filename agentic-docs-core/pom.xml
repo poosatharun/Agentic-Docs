@@ -35,14 +35,6 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-client-chat</artifactId>
         </dependency>
-        <!-- Optional: read @Operation summaries if springdoc is on classpath -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-annotations.version}</version>
-            <optional>true</optional>
-        </dependency>
-
         <!--
             Bean Validation (Jakarta) — provides @NotBlank, @Size, etc. for ChatRequest.
             Marked 'provided' because the host Spring Boot app already brings

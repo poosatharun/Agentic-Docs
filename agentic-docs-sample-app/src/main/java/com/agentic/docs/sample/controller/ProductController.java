@@ -1,7 +1,5 @@
 package com.agentic.docs.sample.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +12,8 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/products")
-@Tag(name = "Product Catalog")
 public class ProductController {
 
-    @Operation(summary = "Create a new product. Request body: { name, sku, category, price, stockQuantity, description, imageUrls }")
     @PostMapping
     public ResponseEntity<Map<String, Object>> createProduct(@RequestBody Map<String, Object> request) {
         return ResponseEntity.status(201).body(Map.of(
@@ -27,7 +23,6 @@ public class ProductController {
         ));
     }
 
-    @Operation(summary = "Get product details by productId including price, stock, and metadata")
     @GetMapping("/{productId}")
     public ResponseEntity<Map<String, Object>> getProduct(@PathVariable String productId) {
         return ResponseEntity.ok(Map.of(
@@ -41,7 +36,6 @@ public class ProductController {
         ));
     }
 
-    @Operation(summary = "Update product details. Request body: { name, description, price, imageUrls, tags }")
     @PutMapping("/{productId}")
     public ResponseEntity<Map<String, Object>> updateProduct(
             @PathVariable String productId,
@@ -49,13 +43,11 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("productId", productId, "updated", true));
     }
 
-    @Operation(summary = "Deactivate (soft-delete) a product from the catalog")
     @DeleteMapping("/{productId}")
     public ResponseEntity<Map<String, Object>> deactivateProduct(@PathVariable String productId) {
         return ResponseEntity.ok(Map.of("productId", productId, "status", "DEACTIVATED"));
     }
 
-    @Operation(summary = "Search products by keyword, category, price range. Query params: q, category, minPrice, maxPrice, inStock, page, size, sortBy")
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchProducts(
             @RequestParam(required = false) String q,
@@ -69,7 +61,6 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("results", List.of(), "total", 0, "page", page, "size", size));
     }
 
-    @Operation(summary = "Update stock quantity for a product. Request body: { quantity, operation: ADD|SUBTRACT|SET }")
     @PatchMapping("/{productId}/stock")
     public ResponseEntity<Map<String, Object>> updateStock(
             @PathVariable String productId,
@@ -77,7 +68,6 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("productId", productId, "newStockQuantity", 300));
     }
 
-    @Operation(summary = "Get stock history and movement log for a product. Query params: fromDate, toDate, page, size")
     @GetMapping("/{productId}/stock/history")
     public ResponseEntity<Map<String, Object>> getStockHistory(
             @PathVariable String productId,
@@ -88,7 +78,6 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("productId", productId, "movements", List.of()));
     }
 
-    @Operation(summary = "Add a customer review to a product. Request body: { customerId, rating (1-5), title, body }")
     @PostMapping("/{productId}/reviews")
     public ResponseEntity<Map<String, Object>> addReview(
             @PathVariable String productId,
@@ -101,7 +90,6 @@ public class ProductController {
         ));
     }
 
-    @Operation(summary = "Get all approved reviews for a product. Query params: page, size, sortBy (recent|rating)")
     @GetMapping("/{productId}/reviews")
     public ResponseEntity<Map<String, Object>> getReviews(
             @PathVariable String productId,
@@ -116,7 +104,6 @@ public class ProductController {
         ));
     }
 
-    @Operation(summary = "Update product pricing including base price, sale price, and tax category. Request body: { price, salePrice, taxCategory }")
     @PutMapping("/{productId}/pricing")
     public ResponseEntity<Map<String, Object>> updatePricing(
             @PathVariable String productId,

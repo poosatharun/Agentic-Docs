@@ -55,7 +55,7 @@ public class AgenticDocsChatService implements ChatService {
             - When asked for implementation, generate concise, correct Java or React code snippets
               using the exact paths, HTTP methods, and field names from the context.
             - If the answer cannot be derived from the context, say:
-              "I could not find a relevant endpoint for that. Please check the Swagger UI."
+              "I could not find a relevant endpoint for that. Please check the API Explorer tab."
             - Keep answers focused and developer-friendly.
 
             API Context:
@@ -134,7 +134,7 @@ public class AgenticDocsChatService implements ChatService {
 
         // Guard against a blank/null response from the LLM
         if (answer == null || answer.isBlank()) {
-            answer = "I could not find a relevant endpoint for that. Please check the Swagger UI.";
+            answer = "I could not find a relevant endpoint for that. Please check the API Explorer tab.";
         }
 
         return new ChatResponse(answer);
