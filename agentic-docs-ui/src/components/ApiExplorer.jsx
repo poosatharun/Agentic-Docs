@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Loader2, BookOpen, Layers, AlertCircle } from 'lucide-react'
+import { Search, BookOpen, Layers, AlertCircle } from 'lucide-react'
 import EndpointRow  from './EndpointRow'
 import { methodColor } from '../constants/methodColors'
 import { useEndpoints } from '../hooks/useEndpoints'

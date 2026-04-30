@@ -11,7 +11,7 @@ import { sendChatMessage } from '../api/chatApi'
  * Data fetching is delegated to {@link sendChatMessage} (src/api/chatApi.js)
  * so this hook only owns UI state, not transport logic.
  *
- * @returns {{ messages, loading, sendMessage, resetMessages }}
+ * @returns {{ messages, loading, sendMessage }}
  */
 export function useChat() {
   const [messages, setMessages] = useState([])
@@ -33,7 +33,5 @@ export function useChat() {
     }
   }, [])
 
-  const resetMessages = useCallback(() => setMessages([]), [])
-
-  return { messages, loading, sendMessage, resetMessages }
+  return { messages, loading, sendMessage }
 }
