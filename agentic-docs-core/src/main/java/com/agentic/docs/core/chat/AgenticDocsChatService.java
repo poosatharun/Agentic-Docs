@@ -70,7 +70,7 @@ public class AgenticDocsChatService implements StreamingChatService {
     /** Stores and searches embedded API endpoint documents. */
     private final VectorStore vectorStore;
 
-    /** Spring AI chat client — talks to whichever LLM is configured (OpenAI or Ollama). */
+    /** Spring AI chat client — talks to the configured Ollama model. */
     private final ChatClient chatClient;
 
     /** Holds all configurable settings (topK, systemPrompt, etc.) from application.properties. */

@@ -7,8 +7,6 @@ Agentic Docs is a Spring Boot starter that turns static API documentation (like 
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
 - [Setup & Running](#setup--running)
-  - [Option 1 — OpenAI (Cloud)](#option-1--openai-cloud)
-  - [Option 2 — Ollama (Local, Free)](#option-2--ollama-local-free)
 - [Running the Sample App](#running-the-sample-app)
 - [Running the UI (Development)](#running-the-ui-development)
 - [Accessing the Agent](#accessing-the-agent)
@@ -64,39 +62,7 @@ This builds all modules in order: `core` → `spring-boot-starter` → `sample-a
 
 ---
 
-### Option 1 — OpenAI (Cloud)
-
-> Requires an OpenAI API key. Approx. cost: **< $0.01 per session**.
-
-**Step 1:** Set your API key as an environment variable.
-
-- **Windows (PowerShell):**
-  ```powershell
-  $env:SPRING_AI_OPENAI_API_KEY="sk-your-key-here"
-  ```
-- **macOS/Linux:**
-  ```bash
-  export SPRING_AI_OPENAI_API_KEY=sk-your-key-here
-  ```
-
-**Step 2:** Make sure `application.properties` has:
-```properties
-spring.profiles.active=openai
-```
-
-**Step 3:** Run the sample app:
-```bash
-cd agentic-docs-sample-app
-mvn spring-boot:run
-```
-
-> ⚠️ **Corporate / Proxy Networks:** If your network uses TLS inspection, the JVM may fail to reach `api.openai.com` with an SSL certificate error.  
-> In this case, use **Option 2 (Ollama)** which runs fully on-premise, or import your corporate CA into the JVM truststore.  
-> The API Explorer tab will still show all endpoints even if the AI chat cannot connect.
-
----
-
-### Option 2 — Ollama (Local, Free)
+### 3. Run with Ollama (Local, Free)
 
 > Runs entirely on your machine — no API key, no cost, no SSL issues.
 
@@ -113,12 +79,7 @@ ollama pull nomic-embed-text
 ollama serve
 ```
 
-**Step 4:** Set the active profile in `agentic-docs-sample-app/src/main/resources/application.properties`:
-```properties
-spring.profiles.active=ollama
-```
-
-**Step 5:** Run the sample app:
+**Step 4:** Run the sample app:
 ```bash
 cd agentic-docs-sample-app
 mvn spring-boot:run
@@ -130,13 +91,9 @@ mvn spring-boot:run
 
 Once started, the backend runs on **http://localhost:8080**.
 
-You can also pass the profile at runtime without editing any files:
+You can also pass the profile at runtime:
 
 ```bash
-# OpenAI
-mvn spring-boot:run -Dspring-boot.run.profiles=openai
-
-# Ollama
 mvn spring-boot:run -Dspring-boot.run.profiles=ollama
 ```
 
@@ -225,10 +182,8 @@ The same fields are also injected into the LLM context, so the AI gives more acc
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `spring.profiles.active` | `openai` | LLM provider: `openai` or `ollama` |
+| `spring.profiles.active` | `ollama` | LLM provider (Ollama only) |
 | `agentic.docs.enabled` | `true` | Enable/disable the RAG agent |
-| `SPRING_AI_OPENAI_API_KEY` | *(env var)* | Your OpenAI API key |
-| `spring.ai.openai.chat.options.model` | `gpt-4o-mini` | OpenAI chat model |
 | `spring.ai.ollama.base-url` | `http://localhost:11434` | Ollama server URL |
 | `spring.ai.ollama.chat.options.model` | `llama3.2` | Ollama chat model |
 | `spring.ai.ollama.embedding.options.model` | `nomic-embed-text` | Ollama embedding model |

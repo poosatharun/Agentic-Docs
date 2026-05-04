@@ -8,7 +8,7 @@
 | Maven | 3.9+ | `mvn -version` |
 | Node.js | 18+ | `node -v` |
 | npm | 9+ | `npm -v` |
-| OpenAI API Key | — | [platform.openai.com](https://platform.openai.com) |
+| Ollama | Latest | [ollama.com/download](https://ollama.com/download) |
 
 ---
 
@@ -23,21 +23,12 @@ git clone https://github.com/your-org/agentic-docs.git
 cd agentic-docs
 ```
 
-### Step 2 — Set your OpenAI API key
+### Step 2 — Pull Ollama models and start Ollama
 
-**Windows (Command Prompt):**
-```cmd
-set SPRING_AI_OPENAI_API_KEY=sk-your-key-here
-```
-
-**Windows (PowerShell):**
-```powershell
-$env:SPRING_AI_OPENAI_API_KEY = "sk-your-key-here"
-```
-
-**macOS / Linux:**
 ```bash
-export SPRING_AI_OPENAI_API_KEY=sk-your-key-here
+ollama pull llama3.2
+ollama pull nomic-embed-text
+ollama serve
 ```
 
 ### Step 3 — Build the UI
@@ -98,9 +89,10 @@ mvn clean install -DskipTests -pl agentic-docs-core,agentic-docs-spring-boot-sta
 
 ```properties
 agentic.docs.enabled=true
-spring.ai.openai.api-key=${SPRING_AI_OPENAI_API_KEY}
-spring.ai.openai.chat.options.model=gpt-4o-mini
-spring.ai.openai.embedding.options.model=text-embedding-3-small
+spring.profiles.active=ollama
+spring.ai.ollama.base-url=http://localhost:11434
+spring.ai.ollama.chat.options.model=llama3.2
+spring.ai.ollama.embedding.options.model=nomic-embed-text
 ```
 
 ### Step 4 — (Optional) Add `@Operation` summaries to your controllers
@@ -183,7 +175,6 @@ Expected response:
 |---|---|---|
 | UI shows 404 | UI not built | Run `npm run build` in `agentic-docs-ui/` |
 | `Scanned 0 endpoints` | `agentic.docs.enabled` not set | Add `agentic.docs.enabled=true` to properties |
-| `401 Unauthorized` from OpenAI | Invalid API key | Check `SPRING_AI_OPENAI_API_KEY` env var |
 | `Connection refused` on chat | Spring Boot not running | Start the app first |
 | Hallucinated endpoints in answers | No `@Operation` summaries | Add summaries to improve context quality |
 | Duplicate scanning logs | Parent/child context | Normal — the guard prevents double-ingestion |

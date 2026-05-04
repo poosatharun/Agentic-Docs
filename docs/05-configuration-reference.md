@@ -2,18 +2,9 @@
 
 ## Overview
 
-Agentic Docs supports two LLM providers out of the box:
+Agentic Docs uses **Ollama** as its LLM provider — free, local, and offline with no API key required.
 
-| Provider | Mode | Cost | Requires |
-|---|---|---|---|
-| **OpenAI** | Cloud (online) | ~$0.01/session | API key + internet |
-| **Ollama** | Local (offline) | Free | Ollama installed + GPU/CPU |
-
-Switching between them is a **two-step process**:
-1. Change one line in `application.properties`
-2. Rebuild with the matching Maven profile flag
-
-See [10-switching-llm-providers.md](./10-switching-llm-providers.md) for the full step-by-step guide.
+See [11-ollama-local-setup.md](./11-ollama-local-setup.md) for installation instructions.
 
 ---
 
@@ -21,13 +12,9 @@ See [10-switching-llm-providers.md](./10-switching-llm-providers.md) for the ful
 
 ```
 agentic-docs-sample-app/src/main/resources/
-├── application.properties          ← Shared settings + active profile selector
-├── application-openai.properties   ← OpenAI-specific config (cloud)
-└── application-ollama.properties   ← Ollama-specific config (local/offline)
+├── application.properties          ← Shared settings
+└── application-ollama.properties   ← Ollama config (local/offline)
 ```
-
-Spring Boot automatically loads `application-{profile}.properties` when
-`spring.profiles.active={profile}` is set in `application.properties`.
 
 ---
 
@@ -58,39 +45,9 @@ logging.level.com.agentic.docs=INFO
 
 ---
 
-## `application-openai.properties` — OpenAI Provider
-
-Loaded automatically when `spring.profiles.active=openai`.
-
-```properties
-spring.ai.openai.api-key=${SPRING_AI_OPENAI_API_KEY:your-openai-api-key-here}
-spring.ai.openai.chat.options.model=gpt-4o-mini
-spring.ai.openai.embedding.options.model=text-embedding-3-small
-```
-
-### OpenAI Properties
-
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `spring.ai.openai.api-key` | `String` | — | API key. Use env var `SPRING_AI_OPENAI_API_KEY` |
-| `spring.ai.openai.chat.options.model` | `String` | `gpt-4o` | Chat model name |
-| `spring.ai.openai.embedding.options.model` | `String` | `text-embedding-ada-002` | Embedding model name |
-| `spring.ai.openai.base-url` | `String` | `https://api.openai.com` | Override for Azure or proxies |
-
-### Recommended OpenAI Models
-
-| Use Case | Model | Notes |
-|---|---|---|
-| Best quality | `gpt-4o` | Slower, more expensive |
-| Best value ✓ | `gpt-4o-mini` | Recommended default |
-| Embeddings ✓ | `text-embedding-3-small` | Recommended default |
-| Embeddings (high quality) | `text-embedding-3-large` | 3× more expensive |
-
----
-
 ## `application-ollama.properties` — Ollama Provider
 
-Loaded automatically when `spring.profiles.active=ollama`.
+Activated by `spring.profiles.active=ollama` in `application.properties` (the default).
 
 ```properties
 spring.ai.ollama.base-url=http://localhost:11434
@@ -132,29 +89,27 @@ spring.ai.ollama.chat.options.temperature=0.1
 
 | Variable | Used by | Description |
 |---|---|---|
-| `SPRING_AI_OPENAI_API_KEY` | OpenAI profile | Your OpenAI secret key (`sk-...`) |
-| `SPRING_PROFILES_ACTIVE` | Both | Override active profile without editing files |
+| `SPRING_PROFILES_ACTIVE` | All | Override active profile without editing files |
 
 ### Setting environment variables
 
 **Windows CMD:**
 ```cmd
-set SPRING_AI_OPENAI_API_KEY=sk-your-key-here
+set SPRING_PROFILES_ACTIVE=ollama
 ```
 
 **Windows PowerShell:**
 ```powershell
-$env:SPRING_AI_OPENAI_API_KEY = "sk-your-key-here"
+$env:SPRING_PROFILES_ACTIVE = "ollama"
 ```
 
 **macOS / Linux:**
 ```bash
-export SPRING_AI_OPENAI_API_KEY=sk-your-key-here
+export SPRING_PROFILES_ACTIVE=ollama
 ```
 
 **Docker Compose:**
 ```yaml
 environment:
-  - SPRING_AI_OPENAI_API_KEY=sk-your-key-here
-  - SPRING_PROFILES_ACTIVE=openai
+  - SPRING_PROFILES_ACTIVE=ollama
 ```

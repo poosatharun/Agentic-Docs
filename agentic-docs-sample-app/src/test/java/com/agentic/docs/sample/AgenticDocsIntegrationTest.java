@@ -43,10 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        // Disable the real OpenAI profile — use a dummy key so autoconfiguration
-        // does not fail on a missing required property before @MockBean takes effect.
-        "spring.profiles.active=",
-        "spring.ai.openai.api-key=test-key-ci"
+        // Use ollama profile but mock VectorStore and ChatClient.Builder so no
+        // real Ollama instance is required during CI.
+        "spring.profiles.active=ollama"
 })
 class AgenticDocsIntegrationTest {
 

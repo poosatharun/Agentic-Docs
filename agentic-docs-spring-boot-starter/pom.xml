@@ -14,7 +14,7 @@
     <artifactId>agentic-docs-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
     <name>Agentic Docs Spring Boot Starter</name>
-    <description>Spring Boot auto-configuration starter that wires up Agentic Docs with zero configuration for OpenAI and Ollama providers.</description>
+    <description>Spring Boot auto-configuration starter that wires up Agentic Docs with zero configuration for Ollama.</description>
 
     <dependencies>
         <!-- AutoConfiguration support -->
@@ -38,18 +38,7 @@
 
         <!-- SimpleVectorStore is provided transitively via spring-ai-vector-store in the core module -->
 
-        <!--
-            Both provider JARs are always included on the classpath.
-            The active provider is controlled purely at runtime via
-            spring.profiles.active (openai or ollama) in application.properties.
-            Each profile's properties file uses spring.autoconfigure.exclude
-            to disable the inactive provider's auto-configuration.
-            This means NO Maven rebuild is needed when switching providers.
-        -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-openai</artifactId>
-        </dependency>
+        <!-- Ollama provider (local, free, offline) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>

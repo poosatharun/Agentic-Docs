@@ -36,8 +36,7 @@
         </dependency>
     </dependencies>
 
-    <!-- To switch LLM providers, rebuild the starter with -P ollama or -P openai,
-         then set spring.profiles.active in application.properties accordingly. -->
+    <!-- Ollama is the only LLM provider. Set spring.profiles.active=ollama in application.properties. -->
 
     <build>
         <plugins>
