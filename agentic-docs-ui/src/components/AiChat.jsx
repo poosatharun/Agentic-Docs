@@ -15,6 +15,11 @@ export default function AiChat({ pendingQuestion, onPendingConsumed }) {
   const bottomRef       = useRef(null)
   const showSuggestions = messages.length === 0
 
+  // Show typing indicator only while waiting for the FIRST token.
+  // Once the assistant message has content, the text itself is visible — no spinner needed.
+  const lastMsg              = messages[messages.length - 1]
+  const waitingForFirstToken = loading && lastMsg?.role === 'assistant' && !lastMsg?.content
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -54,7 +59,7 @@ export default function AiChat({ pendingQuestion, onPendingConsumed }) {
         ) : (
           <div className="max-w-3xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
             {messages.map((msg, i) => <MessageBubble key={i} msg={msg} index={i} />)}
-            {loading && <TypingIndicator />}
+            {waitingForFirstToken && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>
         )}

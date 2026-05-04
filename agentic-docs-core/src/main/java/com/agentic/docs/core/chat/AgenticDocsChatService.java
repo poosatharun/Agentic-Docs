@@ -10,6 +10,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
  * focused on one responsibility (Single Responsibility Principle).</p>
  */
 @Service
-public class AgenticDocsChatService implements ChatService {
+public class AgenticDocsChatService implements StreamingChatService {
 
     private static final Logger log = LoggerFactory.getLogger(AgenticDocsChatService.class);
 
@@ -138,5 +139,40 @@ public class AgenticDocsChatService implements ChatService {
         }
 
         return new ChatResponse(answer);
+    }
+
+    /**
+     * Streams the LLM answer token-by-token using Spring AI's reactive streaming API.
+     *
+     * <p>This is used by the {@code POST /agentic-docs/api/chat/stream} SSE endpoint
+     * to deliver tokens to the UI as they are generated, dramatically reducing
+     * perceived latency when using local models like Ollama.</p>
+     *
+     * @param request contains the natural-language question
+     * @return a {@link Flux} of token strings that complete when the LLM finishes
+     */
+    public Flux<String> streamAnswer(ChatRequest request) {
+        log.debug("[AgenticDocs] Streaming question: {}", request.question());
+
+        List<Document> relevantDocs = vectorStore.similaritySearch(
+                SearchRequest.builder()
+                        .query(request.question())
+                        .topK(properties.topK())
+                        .build()
+        );
+
+        String context = relevantDocs.stream()
+                .map(Document::getText)
+                .collect(Collectors.joining("\n---\n"));
+
+        String systemPrompt = (properties.systemPrompt() != null && !properties.systemPrompt().isBlank())
+                ? properties.systemPrompt()
+                : DEFAULT_SYSTEM_PROMPT;
+
+        return chatClient.prompt()
+                .system(s -> s.text(systemPrompt).param("context", context))
+                .user(request.question())
+                .stream()
+                .content();
     }
 }

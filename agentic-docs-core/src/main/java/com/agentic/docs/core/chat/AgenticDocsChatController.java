@@ -6,11 +6,16 @@ import com.agentic.docs.core.scanner.ApiEndpointMetadata;
 import com.agentic.docs.core.scanner.ApiMetadataScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * REST controller that exposes the Agentic Docs HTTP endpoints.
@@ -48,6 +53,9 @@ public class AgenticDocsChatController {
 
     /** Owns all RAG + LLM logic. The controller delegates to this service. */
     private final ChatService chatService;
+
+    /** Single-thread executor for driving SSE streaming off the request thread. */
+    private final ExecutorService streamExecutor = Executors.newCachedThreadPool();
 
     /**
      * Spring injects both dependencies automatically via constructor injection.
@@ -119,5 +127,68 @@ public class AgenticDocsChatController {
         // Delegate ALL business logic to the service layer
         ChatResponse response = chatService.answer(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Streaming chat endpoint — delivers LLM tokens via Server-Sent Events (SSE)
+     * as they are generated. This dramatically improves perceived latency for local
+     * Ollama models by showing text immediately instead of waiting for the full response.
+     *
+     * <p>Each SSE event contains one raw token string. A final {@code [DONE]} event
+     * signals that the stream has completed.</p>
+     *
+     * @param request the chat request containing the developer's question
+     * @return an SSE stream of token strings
+     */
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(@RequestBody ChatRequest request) {
+        if (request.question() == null || request.question().isBlank()) {
+            SseEmitter emitter = new SseEmitter();
+            try {
+                emitter.send(SseEmitter.event().name("error").data("Please provide a non-empty question."));
+            } catch (IOException ignored) {}
+            emitter.complete();
+            return emitter;
+        }
+
+        // 3-minute timeout — Ollama on slow hardware may take time on first token
+        SseEmitter emitter = new SseEmitter(180_000L);
+
+        streamExecutor.execute(() -> {
+            if (!(chatService instanceof StreamingChatService streamingService)) {
+                // Fallback: this ChatService implementation does not support streaming
+                try {
+                    ChatResponse response = chatService.answer(request);
+                    emitter.send(SseEmitter.event().name("token").data(response.answer()));
+                    emitter.send(SseEmitter.event().name("done").data("[DONE]"));
+                    emitter.complete();
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+                return;
+            }
+
+            streamingService.streamAnswer(request)
+                    .subscribe(
+                            token -> {
+                                try {
+                                    emitter.send(SseEmitter.event().name("token").data(token));
+                                } catch (IOException e) {
+                                    emitter.completeWithError(e);
+                                }
+                            },
+                            emitter::completeWithError,
+                            () -> {
+                                try {
+                                    emitter.send(SseEmitter.event().name("done").data("[DONE]"));
+                                    emitter.complete();
+                                } catch (IOException e) {
+                                    emitter.completeWithError(e);
+                                }
+                            }
+                    );
+        });
+
+        return emitter;
     }
 }

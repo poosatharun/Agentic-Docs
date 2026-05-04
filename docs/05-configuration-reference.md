@@ -96,7 +96,12 @@ Loaded automatically when `spring.profiles.active=ollama`.
 spring.ai.ollama.base-url=http://localhost:11434
 spring.ai.ollama.chat.options.model=llama3.2
 spring.ai.ollama.embedding.options.model=nomic-embed-text
-spring.ai.ollama.chat.options.keep-alive=5m
+
+# Performance tuning
+spring.ai.ollama.chat.options.keep-alive=-1
+spring.ai.ollama.chat.options.num-ctx=2048
+spring.ai.ollama.chat.options.num-predict=512
+spring.ai.ollama.chat.options.temperature=0.1
 ```
 
 ### Ollama Properties
@@ -106,7 +111,10 @@ spring.ai.ollama.chat.options.keep-alive=5m
 | `spring.ai.ollama.base-url` | `String` | `http://localhost:11434` | Ollama server URL |
 | `spring.ai.ollama.chat.options.model` | `String` | — | Chat model name (must be pulled first) |
 | `spring.ai.ollama.embedding.options.model` | `String` | — | Embedding model name (must be pulled first) |
-| `spring.ai.ollama.chat.options.keep-alive` | `String` | `5m` | How long to keep model loaded in memory |
+| `spring.ai.ollama.chat.options.keep-alive` | `String` | `-1` | How long to keep model in RAM. `-1` = indefinitely (no cold-start). Set to e.g. `10m` if RAM is constrained. |
+| `spring.ai.ollama.chat.options.num-ctx` | `int` | `4096` | Context window size in tokens. `2048` is sufficient for RAG API docs and halves inference overhead. |
+| `spring.ai.ollama.chat.options.num-predict` | `int` | unlimited | Max tokens to generate per response. `512` (~350 words) is ample for any API answer. |
+| `spring.ai.ollama.chat.options.temperature` | `float` | `0.8` | Lower = more deterministic. `0.1` improves factual accuracy for API documentation. |
 
 ### Recommended Ollama Models
 

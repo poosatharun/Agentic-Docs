@@ -72,38 +72,68 @@ const [loading, setLoading] = useState(false)
 
 ---
 
-## The `sendMessage` Function
+## The `sendMessage` Function & Streaming
+
+The chat now uses **Server-Sent Events (SSE) streaming** via `POST /agentic-docs/api/chat/stream`. The `useChat` hook manages this:
 
 ```javascript
-const sendMessage = useCallback(async (question) => {
+const sendMessage = useCallback((question) => {
     setMessages((prev) => [...prev, { role: 'user', content: question }])
     setLoading(true)
 
-    try {
-        const res = await fetch('/agentic-docs/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question }),
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.answer }])
-    } catch (err) {
-        setMessages((prev) => [...prev, {
-            role: 'assistant',
-            content: `**Error:** Could not reach the backend...`
-        }])
-    } finally {
-        setLoading(false)
-    }
+    // Pre-insert empty assistant placeholder — filled token by token
+    setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
+
+    sendChatMessageStream(
+        question,
+        // onToken — append each token to the last message
+        (token) => {
+            setMessages((prev) => {
+                const updated = [...prev]
+                const last    = updated[updated.length - 1]
+                updated[updated.length - 1] = { ...last, content: last.content + token }
+                return updated
+            })
+        },
+        // onDone
+        () => setLoading(false),
+        // onError
+        (errMsg) => {
+            setLoading(false)
+            setMessages((prev) => { /* set error content on last msg */ })
+        }
+    )
 }, [])
+```
+
+**Why streaming?** With a local Ollama model, the full response can take 10–30 seconds to generate. Streaming delivers the first token within ~1 second, so the user sees text appearing progressively rather than waiting for a single large response.
+
+**Pre-inserted placeholder** — an empty assistant message is added immediately when the question is sent. Each token callback appends to it. This pattern avoids flicker and keeps the scroll position stable.
+
+**Typing indicator logic** — `<TypingIndicator />` is only shown while `loading` is `true` AND the assistant placeholder is still empty. Once the first token arrives, the indicator disappears and the text itself provides the progress signal:
+
+```javascript
+const waitingForFirstToken = loading && lastMsg?.role === 'assistant' && !lastMsg?.content
 ```
 
 **Why `useCallback`?** `sendMessage` is passed as a prop to both `SuggestionChips` and `InputBar`. Without `useCallback`, a new function reference is created on every render, causing unnecessary re-renders of child components.
 
-**Optimistic UI update** — the user's message is added to the list immediately (before the API call resolves). This makes the UI feel instant and responsive.
+**Error as a message** — network errors are displayed as assistant messages in the chat rather than alert dialogs or toast notifications. This keeps the user in context and provides actionable information.
 
-**Error as a message** — network errors are displayed as assistant messages in the chat rather than alert dialogs or toast notifications. This keeps the user in context and provides actionable information (e.g., "make sure the backend is running").
+### `sendChatMessageStream()` — API layer
+
+Defined in `src/api/chatApi.js`. Uses the browser's `fetch()` API with a `ReadableStream` reader and `TextDecoder` to parse SSE lines incrementally:
+
+```javascript
+export function sendChatMessageStream(question, onToken, onDone, onError) {
+    const controller = new AbortController()
+    fetch(CHAT_STREAM_URL, { method: 'POST', ... signal: controller.signal })
+        .then(response => { /* pump ReadableStream, parse SSE lines */ })
+    return () => controller.abort() // returns abort function
+}
+```
+
+The original blocking `sendChatMessage()` is still exported for tests or custom implementations.
 
 ---
 

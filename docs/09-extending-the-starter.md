@@ -33,40 +33,27 @@ agentic.docs.system-prompt=You are a terse API assistant. Answer in bullet point
 
 ## Adding Streaming Responses
 
-Replace the blocking `call().content()` with a streaming response:
+Streaming is built into the starter via `POST /agentic-docs/api/chat/stream` (see [16-ollama-streaming-performance.md](./16-ollama-streaming-performance.md)). The default `AgenticDocsChatService` already implements `StreamingChatService`.
 
-**Backend — change the controller method:**
+To provide a **custom** streaming implementation, implement the `StreamingChatService` interface (which extends `ChatService`) and register it as the primary bean:
+
 ```java
-@PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-public Flux<String> chatStream(@RequestBody ChatRequest request) {
-    // ... similarity search same as before ...
-
-    return chatClient.prompt()
-            .system(s -> s.text(SYSTEM_PROMPT).param("context", context))
-            .user(request.question())
-            .stream()
-            .content();
+@Bean
+@Primary
+public StreamingChatService myStreamingService() {
+    return new MyStreamingChatService(...);
 }
 ```
 
-**Frontend — use EventSource or fetch with ReadableStream:**
+The stream endpoint checks `instanceof StreamingChatService` — your implementation will be picked up automatically with no changes to the controller.
+
+If you only need the blocking path, implementing the base `ChatService` is sufficient — the stream endpoint automatically wraps your response in a single SSE event as a fallback.
+
+**Frontend — the UI already uses SSE streaming via `sendChatMessageStream()` in `chatApi.js`:**
 ```javascript
-const res = await fetch('/agentic-docs/api/chat/stream', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question }),
-})
-
-const reader = res.body.getReader()
-const decoder = new TextDecoder()
-let answer = ''
-
-while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    answer += decoder.decode(value)
-    setCurrentAnswer(answer) // update UI incrementally
-}
+sendChatMessageStream(question, onToken, onDone, onError)
+// onToken is called for each token string as it arrives
+// returns an abort() function
 ```
 
 ---

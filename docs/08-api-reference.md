@@ -106,6 +106,65 @@ curl -X POST http://localhost:8080/agentic-docs/api/chat \
 
 ---
 
+---
+
+### `POST /agentic-docs/api/chat/stream`
+
+Same RAG pipeline as the blocking endpoint, but delivers the LLM response token-by-token via **Server-Sent Events (SSE)**. This eliminates the long wait when using a local Ollama model.
+
+#### Request
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "question": "string"
+}
+```
+
+#### Response
+
+**Content-Type:** `text/event-stream`
+
+Each SSE event has a named `event` field:
+
+| Event name | Data | Meaning |
+|---|---|---|
+| `token` | raw token text | One piece of the LLM's answer |
+| `done` | `[DONE]` | Stream has completed normally |
+| `error` | error message | Something went wrong |
+
+**Example stream:**
+```
+event: token
+data: Use
+
+event: token
+data:  POST
+
+event: token
+data:  /api/users
+
+event: done
+data: [DONE]
+```
+
+The endpoint has a **3-minute SSE timeout** (`180,000 ms`) to accommodate slow first-request latency on lower-end hardware.
+
+If a custom `ChatService` bean is injected, the endpoint automatically falls back to the blocking `answer()` path and emits the full response as a single `token` event — preserving full backward compatibility.
+
+---
+
+### `GET /agentic-docs/api/chat`
+
+Returns `405 Method Not Allowed` with a usage hint. Useful when someone hits the endpoint in a browser or with a plain `curl` GET.
+
+---
+
 ## Static UI Resources
 
 These are served by Spring Boot's `ResourceHttpRequestHandler` — not REST endpoints.

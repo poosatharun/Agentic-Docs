@@ -220,9 +220,19 @@ Each `Document` carries a metadata `Map` alongside the text. This metadata is st
 
 ---
 
-## `AgenticDocsChatController` — The RAG Endpoint
+## `AgenticDocsChatController` — The RAG Endpoints
 
 **File:** `agentic-docs-core/src/main/java/com/agentic/docs/core/chat/AgenticDocsChatController.java`
+
+The controller exposes three chat-related endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/agentic-docs/api/chat` | `POST` | Blocking: returns the full LLM response as JSON |
+| `/agentic-docs/api/chat/stream` | `POST` | Streaming: delivers tokens via SSE as they are generated |
+| `/agentic-docs/api/chat` | `GET` | Returns `405` with a usage hint |
+
+The streaming endpoint uses `SseEmitter` with a 3-minute timeout and a cached thread pool (`Executors.newCachedThreadPool()`) to drive the SSE emission off the request thread. It calls `AgenticDocsChatService.streamAnswer()` which returns a reactive `Flux<String>`. Each emitted token is forwarded as a named SSE event (`event: token`), followed by a terminal `event: done` when the stream completes. Custom `ChatService` implementations fall back automatically to the blocking path.
 
 ### The System Prompt
 
@@ -276,6 +286,29 @@ String answer = chatClient.prompt()
 **topK=5** — retrieves the 5 most semantically similar endpoints. This is enough context for most questions without exceeding token limits. For a 150-endpoint API, 5 documents is roughly 500 tokens of context.
 
 **`@CrossOrigin(origins = "*")`** — allows the Vite dev server (port 5173) to call the Spring Boot backend (port 8080) during development without CORS errors.
+
+---
+
+### `AgenticDocsChatService.streamAnswer()` — Streaming Path
+
+Mirrors the blocking `answer()` method but uses Spring AI's reactive streaming API:
+
+```java
+public Flux<String> streamAnswer(ChatRequest request) {
+    // Same vector search + context building as answer()
+    List<Document> relevantDocs = vectorStore.similaritySearch(...);
+    String context = relevantDocs.stream().map(Document::getText)
+            .collect(Collectors.joining("\n---\n"));
+
+    return chatClient.prompt()
+            .system(s -> s.text(systemPrompt).param("context", context))
+            .user(request.question())
+            .stream()   // ← reactive instead of .call()
+            .content(); // returns Flux<String>
+}
+```
+
+`.stream().content()` returns a `Flux<String>` that emits one token string per LLM output token. The RAG retrieval and prompt construction are identical to the blocking path — only the final LLM call changes.
 
 ---
 
