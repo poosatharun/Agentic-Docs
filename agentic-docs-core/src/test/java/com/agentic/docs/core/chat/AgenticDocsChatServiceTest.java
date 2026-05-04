@@ -175,9 +175,10 @@ class AgenticDocsChatServiceTest {
      *
      * @param returnValue what {@code .content()} should return
      */
+    @SuppressWarnings("unchecked") // Consumer<PromptSystemSpec> erasure — unavoidable with Mockito any()
     private void mockChatClientChain(String returnValue) {
         when(chatClient.prompt()).thenReturn(promptSpec);
-        when(promptSpec.system(any(java.util.function.Consumer.class))).thenReturn(promptSpec);
+        when(promptSpec.system(any(java.util.function.Consumer.class))).thenAnswer(inv -> promptSpec);
         when(promptSpec.user(anyString())).thenReturn(promptSpec);
         when(promptSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.content()).thenReturn(returnValue);

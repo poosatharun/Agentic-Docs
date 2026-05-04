@@ -1,7 +1,7 @@
 package com.agentic.docs.core.ingestor;
 
 import com.agentic.docs.core.scanner.ApiEndpointMetadata;
-import com.agentic.docs.core.scanner.ApiMetadataScanner;
+import com.agentic.docs.core.scanner.EndpointRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 class ApiDocumentIngestorTest {
 
     @Mock
-    private ApiMetadataScanner scanner;
+    private EndpointRepository endpointRepository;
 
     @Mock
     private VectorStore vectorStore;
@@ -47,7 +47,7 @@ class ApiDocumentIngestorTest {
 
     @BeforeEach
     void setUp() {
-        ingestor = new ApiDocumentIngestor(scanner, vectorStore);
+        ingestor = new ApiDocumentIngestor(endpointRepository, vectorStore);
     }
 
     @Test
@@ -58,7 +58,7 @@ class ApiDocumentIngestorTest {
                 new ApiEndpointMetadata("/api/users",    "GET",  "UserController",    "getUsers",    "List users",    List.of(), List.of(), null, null),
                 new ApiEndpointMetadata("/api/payments", "POST", "PaymentController", "makePayment", "Make a payment", List.of(), List.of(), "PaymentRequest", "PaymentResponse")
         );
-        when(scanner.getScannedEndpoints()).thenReturn(endpoints);
+        when(endpointRepository.getScannedEndpoints()).thenReturn(endpoints);
 
         // WHEN: ingestion runs
         ingestor.ingest();
@@ -80,7 +80,7 @@ class ApiDocumentIngestorTest {
         List<ApiEndpointMetadata> endpoints = List.of(
                 new ApiEndpointMetadata("/api/orders", "DELETE", "OrderController", "cancelOrder", "Cancel an order", List.of(), List.of(), null, "void")
         );
-        when(scanner.getScannedEndpoints()).thenReturn(endpoints);
+        when(endpointRepository.getScannedEndpoints()).thenReturn(endpoints);
 
         // WHEN
         ingestor.ingest();
@@ -99,8 +99,8 @@ class ApiDocumentIngestorTest {
     @Test
     @DisplayName("ingest() does not call vectorStore when no endpoints are found")
     void ingest_skipsVectorStore_whenNoEndpoints() {
-        // GIVEN: the scanner found nothing
-        when(scanner.getScannedEndpoints()).thenReturn(List.of());
+        // GIVEN: the repository found nothing
+        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of());
 
         // WHEN
         ingestor.ingest();
@@ -113,7 +113,7 @@ class ApiDocumentIngestorTest {
     @DisplayName("ingest() is idempotent — second call is silently ignored")
     void ingest_isIdempotent_secondCallIgnored() {
         // GIVEN: one endpoint available
-        when(scanner.getScannedEndpoints()).thenReturn(List.of(
+        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
         ));
 
@@ -129,7 +129,7 @@ class ApiDocumentIngestorTest {
     @DisplayName("ingest() continues gracefully when vectorStore.add() throws an exception")
     void ingest_continuesGracefully_whenVectorStoreThrows() {
         // GIVEN: one endpoint available
-        when(scanner.getScannedEndpoints()).thenReturn(List.of(
+        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
         ));
         // AND: the vector store throws an error (e.g. embedding model unavailable)

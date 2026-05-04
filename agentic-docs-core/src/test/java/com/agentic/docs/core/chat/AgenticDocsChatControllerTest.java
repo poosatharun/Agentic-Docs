@@ -4,17 +4,17 @@ import com.agentic.docs.core.config.AgenticDocsProperties;
 import com.agentic.docs.core.model.ChatRequest;
 import com.agentic.docs.core.model.ChatResponse;
 import com.agentic.docs.core.scanner.ApiEndpointMetadata;
-import com.agentic.docs.core.scanner.ApiMetadataScanner;
+import com.agentic.docs.core.scanner.EndpointRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -73,11 +73,11 @@ class AgenticDocsChatControllerTest {
      * The controller will get this fake service injected — no real LLM calls.
      * Injected as the {@link ChatService} interface, which is what the controller declares.
      */
-    @MockBean
+    @MockitoBean
     private ChatService chatService;
 
-    @MockBean
-    private ApiMetadataScanner apiMetadataScanner;
+    @MockitoBean
+    private EndpointRepository endpointRepository;
 
     // ── POST /agentic-docs/api/chat ───────────────────────────────────────────
 
@@ -134,10 +134,10 @@ class AgenticDocsChatControllerTest {
     @Test
     @DisplayName("GET /endpoints returns 200 with the list of scanned endpoints")
     void getEndpoints_returns200WithEndpointList() throws Exception {
-        // GIVEN: the scanner has found one endpoint
+        // GIVEN: the repository has found one endpoint
         ApiEndpointMetadata fakeEndpoint =
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getAllUsers", "List all users", List.of(), List.of(), null, null);
-        when(apiMetadataScanner.getScannedEndpoints()).thenReturn(List.of(fakeEndpoint));
+        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(fakeEndpoint));
 
         // WHEN: we call the endpoints list API
         mockMvc.perform(get("/agentic-docs/api/endpoints"))
@@ -151,7 +151,7 @@ class AgenticDocsChatControllerTest {
     @Test
     @DisplayName("GET /endpoints returns 200 with empty list when no endpoints are scanned")
     void getEndpoints_returnsEmptyList_whenNoneScanned() throws Exception {
-        when(apiMetadataScanner.getScannedEndpoints()).thenReturn(List.of());
+        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of());
 
         mockMvc.perform(get("/agentic-docs/api/endpoints"))
                 .andExpect(status().isOk())

@@ -100,35 +100,10 @@ public class AgenticDocsChatService implements StreamingChatService {
     public ChatResponse answer(ChatRequest request) {
         log.debug("[AgenticDocs] Processing question: {}", request.question());
 
-        // ── Step 1: Retrieve the most relevant endpoint documents ─────────
-        // The vector store turns the question into an embedding vector and
-        // finds the top-K most similar endpoint documents.
-        // topK is configurable via: agentic.docs.top-k=5
-        List<Document> relevantDocs = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query(request.question())
-                        .topK(properties.topK())
-                        .build()
-        );
-
-        // ── Step 2: Build the context string ──────────────────────────────
-        // Join all retrieved document texts with a separator so the LLM
-        // receives a clean, readable block of API information.
-        String context = relevantDocs.stream()
-                .map(Document::getText)
-                .collect(Collectors.joining("\n---\n"));
-
-        log.debug("[AgenticDocs] Retrieved {} relevant documents for RAG context.", relevantDocs.size());
-
-        // ── Step 3: Call the LLM ──────────────────────────────────────────
-        // Use the user-configured prompt if provided, otherwise fall back to the default.
-        // Configurable via: agentic.docs.system-prompt=<your prompt>
-        String systemPrompt = (properties.systemPrompt() != null && !properties.systemPrompt().isBlank())
-                ? properties.systemPrompt()
-                : DEFAULT_SYSTEM_PROMPT;
+        RagContext ctx = buildRagContext(request);
 
         String answer = chatClient.prompt()
-                .system(s -> s.text(systemPrompt).param("context", context))
+                .system(s -> s.text(ctx.systemPrompt()).param("context", ctx.context()))
                 .user(request.question())
                 .call()
                 .content();
@@ -154,25 +129,54 @@ public class AgenticDocsChatService implements StreamingChatService {
     public Flux<String> streamAnswer(ChatRequest request) {
         log.debug("[AgenticDocs] Streaming question: {}", request.question());
 
+        RagContext ctx = buildRagContext(request);
+
+        return chatClient.prompt()
+                .system(s -> s.text(ctx.systemPrompt()).param("context", ctx.context()))
+                .user(request.question())
+                .stream()
+                .content();
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Executes the shared RAG pipeline steps used by both {@link #answer} and
+     * {@link #streamAnswer}: vector search → context assembly → prompt resolution.
+     *
+     * <p>Extracting this avoids duplicating the retrieval logic and ensures both
+     * code paths stay in sync when topK or the system prompt changes.</p>
+     *
+     * @param request the incoming chat request
+     * @return a {@link RagContext} value object carrying the assembled context string
+     *         and the resolved system prompt
+     */
+    private RagContext buildRagContext(ChatRequest request) {
+        // Step 1: Retrieve the most relevant endpoint documents
         List<Document> relevantDocs = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(request.question())
                         .topK(properties.topK())
                         .build()
         );
+        log.debug("[AgenticDocs] Retrieved {} relevant documents for RAG context.", relevantDocs.size());
 
+        // Step 2: Build the context string
         String context = relevantDocs.stream()
                 .map(Document::getText)
                 .collect(Collectors.joining("\n---\n"));
 
+        // Step 3: Resolve the system prompt (user-configured takes priority)
         String systemPrompt = (properties.systemPrompt() != null && !properties.systemPrompt().isBlank())
                 ? properties.systemPrompt()
                 : DEFAULT_SYSTEM_PROMPT;
 
-        return chatClient.prompt()
-                .system(s -> s.text(systemPrompt).param("context", context))
-                .user(request.question())
-                .stream()
-                .content();
+        return new RagContext(context, systemPrompt);
     }
+
+    /**
+     * Value object carrying the assembled RAG context and resolved system prompt.
+     * A local record avoids exposing these internals as separate method parameters.
+     */
+    private record RagContext(String context, String systemPrompt) {}
 }

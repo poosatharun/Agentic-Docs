@@ -7,9 +7,9 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -57,15 +57,13 @@ class AgenticDocsIntegrationTest {
      * {@code VectorStoreConfig} is {@code @ConditionalOnMissingBean}, so this mock
      * takes precedence and the real {@code SimpleVectorStore} is never created.
      */
-    @MockBean
+    @MockitoBean
     private VectorStore vectorStore;
 
     /**
      * Replaced with a mock so no real LLM client is wired up.
-     * The POST /chat test never actually reaches the LLM — it's rejected at the
-     * Bean Validation layer (blank question) before the service is called.
      */
-    @MockBean
+    @MockitoBean
     private ChatClient.Builder chatClientBuilder;
 
     // ── Tests ─────────────────────────────────────────────────────────────────

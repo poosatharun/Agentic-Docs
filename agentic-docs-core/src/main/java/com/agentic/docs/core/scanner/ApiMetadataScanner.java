@@ -26,11 +26,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
- * Listens for {@link ContextRefreshedEvent} and uses {@link RequestMappingHandlerMapping}
- * to discover every {@code @RestController} endpoint in the host application.
+ * Default {@link EndpointRepository} implementation.
+ *
+ * <p>Listens for {@link ContextRefreshedEvent} and uses {@link RequestMappingHandlerMapping}
+ * to discover every {@code @RestController} endpoint in the host application.</p>
+ *
+ * <p>The class is open for extension: override {@link #extractDescription(Method)} to plug in
+ * a custom description source (e.g. read from {@code @Operation} or a properties file).
+ * To replace the entire scanning strategy, provide a {@code @Primary @Bean EndpointRepository}.</p>
  */
 @Component
-public class ApiMetadataScanner {
+public class ApiMetadataScanner implements EndpointRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ApiMetadataScanner.class);
 
@@ -167,10 +173,16 @@ public class ApiMetadataScanner {
     }
 
     /**
-     * Returns the method name as a human-readable description.
-     * Override this method to plug in a custom description source.
+     * Returns a human-readable description for an endpoint method.
+     *
+     * <p>The default implementation returns the Java method name.
+     * Subclasses may override this to read from {@code @Operation(summary)},
+     * a resource bundle, or any other source.</p>
+     *
+     * @param method the controller handler method
+     * @return non-null description string
      */
-    private String extractDescription(Method method) {
+    protected String extractDescription(Method method) {
         return method.getName();
     }
 }

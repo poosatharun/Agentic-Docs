@@ -1,7 +1,7 @@
 package com.agentic.docs.core.ingestor;
 
 import com.agentic.docs.core.scanner.ApiEndpointMetadata;
-import com.agentic.docs.core.scanner.ApiMetadataScanner;
+import com.agentic.docs.core.scanner.EndpointRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -20,20 +20,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Converts every {@link ApiEndpointMetadata} into a Spring AI {@link Document}
  * and stores it in the {@link VectorStore} for similarity search.
  *
- * <p>{@code @Order(1)} ensures this runs after {@link ApiMetadataScanner}
- * (which also listens on {@link ContextRefreshedEvent} with default order).</p>
+ * <p>Depends on {@link EndpointRepository} (not the concrete scanner) so the
+ * ingestion strategy is decoupled from the discovery strategy (DIP).</p>
+ *
+ * <p>{@code @Order(2)} ensures this runs after {@link com.agentic.docs.core.scanner.ApiMetadataScanner}
+ * (which listens on {@link ContextRefreshedEvent} with {@code @Order(1)}).</p>
  */
 @Component
 public class ApiDocumentIngestor {
 
     private static final Logger log = LoggerFactory.getLogger(ApiDocumentIngestor.class);
 
-    private final ApiMetadataScanner scanner;
+    private final EndpointRepository endpointRepository;
     private final VectorStore vectorStore;
     private final AtomicBoolean ingested = new AtomicBoolean(false);
 
-    public ApiDocumentIngestor(ApiMetadataScanner scanner, VectorStore vectorStore) {
-        this.scanner = scanner;
+    public ApiDocumentIngestor(EndpointRepository endpointRepository, VectorStore vectorStore) {
+        this.endpointRepository = endpointRepository;
         this.vectorStore = vectorStore;
     }
 
@@ -43,7 +46,7 @@ public class ApiDocumentIngestor {
         // Guard against duplicate events (parent/child context refreshes)
         if (!ingested.compareAndSet(false, true)) return;
 
-        List<ApiEndpointMetadata> endpoints = scanner.getScannedEndpoints();
+        List<ApiEndpointMetadata> endpoints = endpointRepository.getScannedEndpoints();
         if (endpoints.isEmpty()) {
             log.warn("[AgenticDocs] No endpoints found to ingest. Is the host app a @SpringBootApplication?");
             return;

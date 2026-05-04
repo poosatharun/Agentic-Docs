@@ -3,9 +3,11 @@ package com.agentic.docs.core.chat;
 import com.agentic.docs.core.model.ChatRequest;
 import com.agentic.docs.core.model.ChatResponse;
 import com.agentic.docs.core.scanner.ApiEndpointMetadata;
-import com.agentic.docs.core.scanner.ApiMetadataScanner;
+import com.agentic.docs.core.scanner.EndpointRepository;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * REST controller that exposes the Agentic Docs HTTP endpoints.
@@ -35,9 +38,10 @@ import java.util.concurrent.Executors;
  *
  * <p>Endpoints exposed:</p>
  * <ul>
- *   <li>{@code GET  /agentic-docs/api/endpoints} — list all scanned REST endpoints</li>
- *   <li>{@code GET  /agentic-docs/api/chat}      — returns a friendly usage hint</li>
- *   <li>{@code POST /agentic-docs/api/chat}      — ask a question, receive an AI answer</li>
+ *   <li>{@code GET  /agentic-docs/api/endpoints}     — list all scanned REST endpoints</li>
+ *   <li>{@code GET  /agentic-docs/api/chat}           — returns a friendly usage hint</li>
+ *   <li>{@code POST /agentic-docs/api/chat}           — ask a question, receive an AI answer</li>
+ *   <li>{@code POST /agentic-docs/api/chat/stream}    — stream answer tokens via SSE</li>
  * </ul>
  */
 @RestController
@@ -48,27 +52,50 @@ public class AgenticDocsChatController {
 
     // ── Dependencies ──────────────────────────────────────────────────────────
 
-    /** Provides the list of scanned REST endpoints for the API Explorer UI tab. */
-    private final ApiMetadataScanner apiMetadataScanner;
+    /**
+     * Abstraction over endpoint discovery — injected by interface (DIP).
+     * Defaults to {@link com.agentic.docs.core.scanner.ApiMetadataScanner};
+     * consumers may provide a {@code @Primary} replacement.
+     */
+    private final EndpointRepository endpointRepository;
 
-    /** Owns all RAG + LLM logic. The controller delegates to this service. */
+    /** Owns all RAG + LLM logic. The controller delegates to this service (DIP). */
     private final ChatService chatService;
 
-    /** Single-thread executor for driving SSE streaming off the request thread. */
+    /**
+     * Bounded thread pool for driving SSE streaming off the servlet request thread.
+     * Shut down gracefully by {@link #shutdown()} on application context close.
+     */
     private final ExecutorService streamExecutor = Executors.newCachedThreadPool();
 
     /**
      * Spring injects both dependencies automatically via constructor injection.
-     * {@code ChatService} is injected by interface — any {@code @Bean} that implements
-     * {@link ChatService} will be used, including custom consumer-provided implementations.
+     * Both parameters are injected by interface, not by concrete class.
      *
-     * @param apiMetadataScanner scans and holds the discovered endpoints
-     * @param chatService        handles the RAG pipeline and LLM call
+     * @param endpointRepository provides the discovered endpoints (DIP)
+     * @param chatService        handles the RAG pipeline and LLM call (DIP)
      */
-    public AgenticDocsChatController(ApiMetadataScanner apiMetadataScanner,
+    public AgenticDocsChatController(EndpointRepository endpointRepository,
                                      ChatService chatService) {
-        this.apiMetadataScanner = apiMetadataScanner;
+        this.endpointRepository = endpointRepository;
         this.chatService        = chatService;
+    }
+
+    /**
+     * Gracefully shuts down the SSE thread pool when the Spring context closes.
+     * Without this, threads survive the context and prevent clean JVM shutdown.
+     */
+    @PreDestroy
+    public void shutdown() {
+        streamExecutor.shutdown();
+        try {
+            if (!streamExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                streamExecutor.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            streamExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     // ── Endpoints ─────────────────────────────────────────────────────────────
@@ -81,7 +108,7 @@ public class AgenticDocsChatController {
      */
     @GetMapping("/endpoints")
     public ResponseEntity<List<ApiEndpointMetadata>> listEndpoints() {
-        return ResponseEntity.ok(apiMetadataScanner.getScannedEndpoints());
+        return ResponseEntity.ok(endpointRepository.getScannedEndpoints());
     }
 
     /**
@@ -93,7 +120,7 @@ public class AgenticDocsChatController {
     @GetMapping("/chat")
     public ResponseEntity<ChatResponse> chatInfo() {
         return ResponseEntity
-                .status(org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED)
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new ChatResponse(
                         "This endpoint only accepts POST requests. " +
                         "Please use the Agentic Docs UI at /agentic-docs/ " +
@@ -141,15 +168,7 @@ public class AgenticDocsChatController {
      * @return an SSE stream of token strings
      */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter chatStream(@RequestBody ChatRequest request) {
-        if (request.question() == null || request.question().isBlank()) {
-            SseEmitter emitter = new SseEmitter();
-            try {
-                emitter.send(SseEmitter.event().name("error").data("Please provide a non-empty question."));
-            } catch (IOException ignored) {}
-            emitter.complete();
-            return emitter;
-        }
+    public SseEmitter chatStream(@Validated @RequestBody ChatRequest request) {
 
         // 3-minute timeout — Ollama on slow hardware may take time on first token
         SseEmitter emitter = new SseEmitter(180_000L);
