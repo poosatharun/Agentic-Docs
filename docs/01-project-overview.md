@@ -65,5 +65,4 @@ The project was built with these non-negotiable constraints:
 1. **Zero infrastructure** — no external database, no Docker, no Redis. The vector store lives in JVM memory.
 2. **Plug-and-play** — adding the starter to any Spring Boot app requires exactly one dependency and one property.
 3. **Non-invasive** — the starter does not modify the host application's beans, routes, or configuration.
-4. **LLM-agnostic** — the OpenAI default can be swapped for any Spring AI-supported provider by changing properties.
-5. **Self-contained UI** — the React frontend is pre-built and served as static resources by Spring Boot itself.
+4. **Self-contained UI** — the React frontend is pre-built and served as static resources by Spring Boot itself.

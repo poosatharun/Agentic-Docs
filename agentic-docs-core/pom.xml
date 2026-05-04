@@ -14,6 +14,7 @@
     <artifactId>agentic-docs-core</artifactId>
     <packaging>jar</packaging>
     <name>Agentic Docs Core</name>
+    <description>Core RAG pipeline, endpoint scanner, vector store integration, and REST API for Agentic Docs.</description>
 
     <dependencies>
         <!-- Spring Web MVC — provided by the host app -->

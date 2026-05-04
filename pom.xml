@@ -10,6 +10,30 @@
     <packaging>pom</packaging>
     <name>Agentic Docs Parent</name>
     <description>Transforms static API docs into an interactive RAG agent</description>
+    <url>https://github.com/poosatharun/Agentic-Docs</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>poosatharun</id>
+            <name>Poosatha Arun</name>
+            <url>https://github.com/poosatharun</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/poosatharun/Agentic-Docs.git</connection>
+        <developerConnection>scm:git:ssh://github.com/poosatharun/Agentic-Docs.git</developerConnection>
+        <url>https://github.com/poosatharun/Agentic-Docs</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>agentic-docs-core</module>
@@ -79,6 +103,42 @@
                         <release>21</release>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals><goal>jar-no-fork</goal></goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.7.0</version>
+                    <configuration>
+                        <doclint>none</doclint>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals><goal>jar</goal></goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.2.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>0.6.0</version>
+                    <extensions>true</extensions>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -92,4 +152,57 @@
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Maven Central via Sonatype Central Portal</name>
+            <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+        </repository>
+    </distributionManagement>
+
+    <!--
+        Release profile: activate with -P release
+        mvn clean deploy -P release
+        Requires:
+          - A GPG key set up locally (run: gpg -gen-key)
+          - Sonatype Central Portal credentials in ~/.m2/settings.xml under server id 'central'
+    -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
