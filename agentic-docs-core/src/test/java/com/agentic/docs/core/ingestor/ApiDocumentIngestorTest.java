@@ -1,7 +1,8 @@
 package com.agentic.docs.core.ingestor;
 
+import com.agentic.docs.core.config.AgenticDocsProperties;
 import com.agentic.docs.core.scanner.ApiEndpointMetadata;
-import com.agentic.docs.core.scanner.EndpointRepository;
+import com.agentic.docs.core.scanner.ApiScanCompletedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,28 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link ApiDocumentIngestor}.
- *
- * <p>These tests verify the core ingestion logic:
- * <ul>
- *   <li>Endpoints from the scanner are converted to {@link Document} objects</li>
- *   <li>Documents are added to the vector store exactly once</li>
- *   <li>Duplicate event fires are safely ignored (idempotency guard)</li>
- *   <li>Graceful handling when no endpoints are scanned</li>
- * </ul>
- *
- * <h2>Key concept: ArgumentCaptor</h2>
- * <p>An {@code ArgumentCaptor} lets us "capture" the actual argument passed to a mock
- * method, so we can inspect its contents in assertions. Here we capture the list of
- * {@link Document} objects passed to {@code vectorStore.add(...)} to verify they
- * were built correctly from the endpoint metadata.</p>
- */
 @ExtendWith(MockitoExtension.class)
 class ApiDocumentIngestorTest {
-
-    @Mock
-    private EndpointRepository endpointRepository;
 
     @Mock
     private VectorStore vectorStore;
@@ -47,45 +28,44 @@ class ApiDocumentIngestorTest {
 
     @BeforeEach
     void setUp() {
-        ingestor = new ApiDocumentIngestor(endpointRepository, vectorStore);
+        AgenticDocsProperties props = new AgenticDocsProperties(
+                true, 5, null,
+                "./nonexistent-test-store-XXXXXX.json",
+                new AgenticDocsProperties.RateLimit(true, 20),
+                new AgenticDocsProperties.Cors(List.of("http://localhost:5173"))
+        );
+        ingestor = new ApiDocumentIngestor(vectorStore, props);
+    }
+
+    private ApiScanCompletedEvent eventWith(List<ApiEndpointMetadata> endpoints) {
+        return new ApiScanCompletedEvent(this, endpoints);
     }
 
     @Test
-    @DisplayName("ingest() adds one Document per scanned endpoint")
-    void ingest_addsOneDocumentPerEndpoint() {
-        // GIVEN: the scanner found two endpoints
+    @DisplayName("onScanCompleted() adds one Document per scanned endpoint")
+    void onScanCompleted_addsOneDocumentPerEndpoint() {
         List<ApiEndpointMetadata> endpoints = List.of(
-                new ApiEndpointMetadata("/api/users",    "GET",  "UserController",    "getUsers",    "List users",    List.of(), List.of(), null, null),
+                new ApiEndpointMetadata("/api/users",    "GET",  "UserController",    "getUsers",    "List users",     List.of(), List.of(), null, null),
                 new ApiEndpointMetadata("/api/payments", "POST", "PaymentController", "makePayment", "Make a payment", List.of(), List.of(), "PaymentRequest", "PaymentResponse")
         );
-        when(endpointRepository.getScannedEndpoints()).thenReturn(endpoints);
 
-        // WHEN: ingestion runs
-        ingestor.ingest();
+        ingestor.onScanCompleted(eventWith(endpoints));
 
-        // THEN: vectorStore.add() was called with exactly 2 documents
-        // We use ArgumentCaptor to capture what was actually passed to vectorStore.add()
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Document>> captor = ArgumentCaptor.forClass(List.class);
         verify(vectorStore, times(1)).add(captor.capture());
-
-        List<Document> addedDocs = captor.getValue();
-        assertThat(addedDocs).hasSize(2);
+        assertThat(captor.getValue()).hasSize(2);
     }
 
     @Test
-    @DisplayName("ingest() embeds endpoint details in the document text")
-    void ingest_embeds_endpointDetails_inDocumentText() {
-        // GIVEN: one endpoint
+    @DisplayName("onScanCompleted() embeds endpoint details in the document text")
+    void onScanCompleted_embeds_endpointDetails_inDocumentText() {
         List<ApiEndpointMetadata> endpoints = List.of(
                 new ApiEndpointMetadata("/api/orders", "DELETE", "OrderController", "cancelOrder", "Cancel an order", List.of(), List.of(), null, "void")
         );
-        when(endpointRepository.getScannedEndpoints()).thenReturn(endpoints);
 
-        // WHEN
-        ingestor.ingest();
+        ingestor.onScanCompleted(eventWith(endpoints));
 
-        // THEN: capture the document and verify its text contains key info
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Document>> captor = ArgumentCaptor.forClass(List.class);
         verify(vectorStore).add(captor.capture());
@@ -97,46 +77,34 @@ class ApiDocumentIngestorTest {
     }
 
     @Test
-    @DisplayName("ingest() does not call vectorStore when no endpoints are found")
-    void ingest_skipsVectorStore_whenNoEndpoints() {
-        // GIVEN: the repository found nothing
-        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of());
-
-        // WHEN
-        ingestor.ingest();
-
-        // THEN: vectorStore.add() was NEVER called — no point storing empty data
+    @DisplayName("onScanCompleted() does not call vectorStore when no endpoints are found")
+    void onScanCompleted_skipsVectorStore_whenNoEndpoints() {
+        ingestor.onScanCompleted(eventWith(List.of()));
         verify(vectorStore, never()).add(any());
     }
 
     @Test
-    @DisplayName("ingest() is idempotent — second call is silently ignored")
-    void ingest_isIdempotent_secondCallIgnored() {
-        // GIVEN: one endpoint available
-        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(
+    @DisplayName("onScanCompleted() is idempotent - second call is silently ignored")
+    void onScanCompleted_isIdempotent_secondCallIgnored() {
+        List<ApiEndpointMetadata> endpoints = List.of(
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
-        ));
+        );
 
-        // WHEN: ingest() is called twice (simulating Spring context refreshed twice)
-        ingestor.ingest();
-        ingestor.ingest();
+        ingestor.onScanCompleted(eventWith(endpoints));
+        ingestor.onScanCompleted(eventWith(endpoints));
 
-        // THEN: vectorStore.add() was called only once — the AtomicBoolean guard worked
         verify(vectorStore, times(1)).add(any());
     }
 
     @Test
-    @DisplayName("ingest() continues gracefully when vectorStore.add() throws an exception")
-    void ingest_continuesGracefully_whenVectorStoreThrows() {
-        // GIVEN: one endpoint available
-        when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(
+    @DisplayName("onScanCompleted() continues gracefully when vectorStore.add() throws")
+    void onScanCompleted_continuesGracefully_whenVectorStoreThrows() {
+        List<ApiEndpointMetadata> endpoints = List.of(
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
-        ));
-        // AND: the vector store throws an error (e.g. embedding model unavailable)
+        );
         doThrow(new RuntimeException("Embedding model not available")).when(vectorStore).add(any());
 
-        // WHEN / THEN: ingest() should NOT propagate the exception — just log a warning
-        // If an exception were thrown here, the test would fail with an error.
-        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> ingestor.ingest());
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                () -> ingestor.onScanCompleted(eventWith(endpoints)));
     }
 }

@@ -47,6 +47,17 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- ── Rate Limiting ───────────────────────────────────────────────── -->
+        <!--
+            Bucket4j — token-bucket rate limiting with zero external infrastructure.
+            In-memory per-IP rate limiting: no Redis, no DB, no extra config needed.
+        -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
         <!-- ── Test dependencies ───────────────────────────────────────────── -->
         <!--
             spring-boot-starter-test pulls in everything needed for testing:

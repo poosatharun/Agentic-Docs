@@ -1,22 +1,53 @@
 package com.agentic.docs.core.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
+
+import java.io.File;
 
 /**
- * Provides an in-memory {@link SimpleVectorStore} as a fallback.
- * Only created if no other VectorStore bean is already defined.
+ * Provides a file-backed {@link SimpleVectorStore} as a fallback (no external DB required).
+ * Loads saved embeddings from disk on startup and saves them back on shutdown.
+ * Skipped automatically if another {@link VectorStore} bean is present.
+ * Configure the path via {@code agentic.docs.vector-store-path}.
  */
 @Configuration
 public class VectorStoreConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(VectorStoreConfig.class);
+
     @Bean
     @ConditionalOnMissingBean(VectorStore.class)
-    public VectorStore vectorStore(EmbeddingModel embeddingModel) {
-        return SimpleVectorStore.builder(embeddingModel).build();
+    public SimpleVectorStore vectorStore(EmbeddingModel embeddingModel,
+                                         AgenticDocsProperties properties) {
+        SimpleVectorStore store = SimpleVectorStore.builder(embeddingModel).build();
+
+        File storeFile = new File(properties.vectorStorePath());
+        if (storeFile.exists()) {
+            store.load(storeFile);
+            log.info("[AgenticDocs] Vector store loaded from disk: {}", storeFile.getAbsolutePath());
+        } else {
+            log.info("[AgenticDocs] No vector store file at '{}' — will ingest on first startup.", storeFile.getAbsolutePath());
+        }
+        return store;
+    }
+
+    @EventListener(ContextClosedEvent.class)
+    public void saveOnShutdown(SimpleVectorStore store, AgenticDocsProperties properties) {
+        File storeFile = new File(properties.vectorStorePath());
+        try {
+            store.save(storeFile);
+            log.info("[AgenticDocs] Vector store saved to disk: {}", storeFile.getAbsolutePath());
+        } catch (Exception ex) {
+            log.warn("[AgenticDocs] Could not save vector store to disk: {}", ex.getMessage());
+        }
     }
 }

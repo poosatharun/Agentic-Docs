@@ -7,11 +7,15 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,12 +46,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+@Import(AgenticDocsIntegrationTest.TestBeans.class)
 @TestPropertySource(properties = {
-        // Use ollama profile but mock VectorStore and ChatClient.Builder so no
-        // real Ollama instance is required during CI.
-        "spring.profiles.active=ollama"
+        "spring.profiles.active=ollama",
+        // Disable Ollama auto-configuration so no real connection is attempted in CI.
+        // The ChatClient.Builder bean is prototype-scoped (Spring AI) and cannot be
+        // overridden with @MockitoBean — we provide a manual mock via @TestConfiguration instead.
+        "spring.ai.ollama.chat.enabled=false",
+        "spring.ai.ollama.embedding.enabled=false"
 })
 class AgenticDocsIntegrationTest {
+
+    /**
+     * Provides singleton mock beans for the LLM infrastructure so no real Ollama
+     * instance or API key is required during CI.
+     *
+     * <p>We use a {@code @TestConfiguration} instead of {@code @MockitoBean} because
+     * Spring AI's {@code ChatClient.Builder} is prototype-scoped and cannot be overridden
+     * by {@code @MockitoBean} (which only works with singleton beans).</p>
+     */
+    @TestConfiguration
+    static class TestBeans {
+        @Bean
+        public ChatClient.Builder chatClientBuilder() {
+            ChatClient.Builder builder = mock(ChatClient.Builder.class);
+            ChatClient client = mock(ChatClient.class);
+            org.mockito.Mockito.when(builder.build()).thenReturn(client);
+            return builder;
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -59,12 +86,6 @@ class AgenticDocsIntegrationTest {
      */
     @MockitoBean
     private VectorStore vectorStore;
-
-    /**
-     * Replaced with a mock so no real LLM client is wired up.
-     */
-    @MockitoBean
-    private ChatClient.Builder chatClientBuilder;
 
     // ── Tests ─────────────────────────────────────────────────────────────────
 

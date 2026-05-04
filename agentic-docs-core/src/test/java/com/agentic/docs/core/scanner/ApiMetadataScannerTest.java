@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -37,13 +38,16 @@ class ApiMetadataScannerTest {
     private RequestMappingHandlerMapping handlerMapping;
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private ContextRefreshedEvent event;
 
     private ApiMetadataScanner scanner;
 
     @BeforeEach
     void setUp() {
-        scanner = new ApiMetadataScanner(handlerMapping);
+        scanner = new ApiMetadataScanner(handlerMapping, eventPublisher);
     }
 
     // ── Tests ─────────────────────────────────────────────────────────────────

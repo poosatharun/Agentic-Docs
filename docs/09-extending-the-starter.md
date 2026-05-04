@@ -1,53 +1,54 @@
 # 09 — Extending the Starter
 
-## Adding a Custom System Prompt
+## Customising the System Prompt
 
-The system prompt is currently hardcoded in `AgenticDocsChatController`. To make it configurable, add a `@ConfigurationProperties` class:
+The system prompt is fully configurable via `application.properties` — no code change required:
 
-```java
-// In agentic-docs-core
-@ConfigurationProperties(prefix = "agentic.docs")
-public class AgenticDocsProperties {
-    private boolean enabled = false;
-    private String systemPrompt = DEFAULT_SYSTEM_PROMPT;
-    // getters + setters
-}
-```
-
-Then inject it into the controller:
-```java
-public AgenticDocsChatController(VectorStore vectorStore,
-                                  ChatClient.Builder builder,
-                                  AgenticDocsProperties props) {
-    this.systemPrompt = props.getSystemPrompt();
-    // ...
-}
-```
-
-Users can then override the prompt in `application.properties`:
 ```properties
-agentic.docs.system-prompt=You are a terse API assistant. Answer in bullet points only.
+agentic.docs.system-prompt=You are a terse API assistant. Answer in bullet points only. \
+  Keep answers under 200 words.\n\nAPI Context:\n---\n{context}\n---
 ```
 
----
+**Important:** your custom prompt must include the `{context}` placeholder. The RAG pipeline replaces it with the retrieved endpoint text at runtime.
 
-## Adding Streaming Responses
+The built-in `DEFAULT_SYSTEM_PROMPT` in `AgenticDocsChatService` is used when this property is absent or blank. It includes anti-injection guardrails — if you provide a custom prompt, consider keeping equivalent boundaries.
 
-Streaming is built into the starter via `POST /agentic-docs/api/chat/stream` (see [16-ollama-streaming-performance.md](./16-ollama-streaming-performance.md)). The default `AgenticDocsChatService` already implements `StreamingChatService`.
-
-To provide a **custom** streaming implementation, implement the `StreamingChatService` interface (which extends `ChatService`) and register it as the primary bean:
+To provide the prompt programmatically (e.g., loaded from a database), register a `@Primary` `ChatPort` bean that overrides the prompt resolution logic:
 
 ```java
 @Bean
 @Primary
-public StreamingChatService myStreamingService() {
-    return new MyStreamingChatService(...);
+public ChatPort myCustomChatPort(LlmPort llmPort, VectorStorePort vectorStorePort,
+                                  AgenticDocsProperties properties) {
+    return new MyCustomChatService(llmPort, vectorStorePort, properties);
 }
 ```
 
-The stream endpoint checks `instanceof StreamingChatService` — your implementation will be picked up automatically with no changes to the controller.
+---
 
-If you only need the blocking path, implementing the base `ChatService` is sufficient — the stream endpoint automatically wraps your response in a single SSE event as a fallback.
+## Custom Chat Implementation
+
+Streaming is built into the starter via `POST /agentic-docs/api/chat/stream` (see [16-ollama-streaming-performance.md](./16-ollama-streaming-performance.md)). The default `AgenticDocsChatService` implements the `ChatPort` interface, which provides both blocking and streaming in a single contract:
+
+```java
+public interface ChatPort {
+    ChatResponse answer(ChatRequest request);
+    Flux<String> streamAnswer(ChatRequest request);
+}
+```
+
+To provide a **custom** implementation (e.g., caching, A/B routing, multi-model), implement `ChatPort` and register it as the primary bean:
+
+```java
+@Bean
+@Primary
+public ChatPort myChatPort(LlmPort llmPort, VectorStorePort vectorStorePort,
+                            AgenticDocsProperties properties) {
+    return new MyCachingChatPort(llmPort, vectorStorePort, properties);
+}
+```
+
+Both the blocking `/chat` and streaming `/chat/stream` endpoints delegate to `chatPort.answer()` and `chatPort.streamAnswer()` respectively — your implementation is picked up automatically.
 
 **Frontend — the UI already uses SSE streaming via `sendChatMessageStream()` in `chatApi.js`:**
 ```javascript

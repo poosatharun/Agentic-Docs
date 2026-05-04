@@ -65,19 +65,21 @@ Content-Type: application/json
 
 | Status | Cause | Body |
 |---|---|---|
-| `400 Bad Request` | Missing or null `question` field | Spring default error body |
-| `500 Internal Server Error` | OpenAI API failure or vector store error | Spring default error body |
-| `503 Service Unavailable` | OpenAI rate limit exceeded | Spring default error body |
+| `400 Bad Request` | Missing or blank `question` field | `{ "answer": "Please provide a non-empty question." }` |
+| `429 Too Many Requests` | Rate limit exceeded (20 req/min per IP by default) | `{ "answer": "Rate limit exceeded. Please slow down." }` |
+| `405 Method Not Allowed` | GET request to `/chat` endpoint | `{ "answer": "This endpoint only accepts POST requests..." }` |
+| `500 Internal Server Error` | LLM API failure or vector store error | Spring default error body |
 
 ---
 
 #### CORS
 
-The endpoint has `@CrossOrigin(origins = "*")` applied. All origins are allowed. This enables:
-- The Vite dev server (port 5173) to call the Spring Boot backend (port 8080)
-- Any frontend application to use the API
+CORS is configured via `AgenticDocsMvcConfigurer` using the `agentic.docs.cors.allowed-origins` property (default: `http://localhost:5173`). Unlike the previous `@CrossOrigin(origins = "*")` annotation, this is configurable without recompiling.
 
-For production, replace `"*"` with your specific origin in `AgenticDocsChatController`.
+```properties
+# application.properties — allow multiple origins
+agentic.docs.cors.allowed-origins=http://localhost:5173,https://yourapp.com
+```
 
 ---
 
@@ -155,7 +157,7 @@ data: [DONE]
 
 The endpoint has a **3-minute SSE timeout** (`180,000 ms`) to accommodate slow first-request latency on lower-end hardware.
 
-If a custom `ChatService` bean is injected, the endpoint automatically falls back to the blocking `answer()` path and emits the full response as a single `token` event — preserving full backward compatibility.
+Client disconnects automatically cancel the upstream `Flux` subscription, stopping Ollama token generation immediately.
 
 ---
 
@@ -184,7 +186,7 @@ These are not HTTP endpoints but document the internal Java records used by the 
 
 ### `ChatRequest`
 ```java
-public record ChatRequest(String question) {}
+public record ChatRequest(@NotBlank String question) {}
 ```
 
 ### `ChatResponse`
@@ -195,10 +197,22 @@ public record ChatResponse(String answer) {}
 ### `ApiEndpointMetadata`
 ```java
 public record ApiEndpointMetadata(
-    String path,          // e.g. "/api/v1/subscriptions/{id}"
-    String httpMethod,    // e.g. "POST"
-    String controllerName, // e.g. "PaymentsController"
-    String methodName,    // e.g. "terminateSubscription"
-    String description    // e.g. "Terminate a subscription..."
+    String path,              // e.g. "/api/v1/subscriptions/{id}"
+    String httpMethod,        // e.g. "POST"
+    String controllerName,    // e.g. "PaymentsController"
+    String methodName,        // e.g. "terminateSubscription"
+    String description,       // from @Operation(summary) or camelCase-to-sentence
+    List<String> pathParams,  // e.g. ["id"]
+    List<String> queryParams, // e.g. ["page", "size"]
+    String requestBodyType,   // e.g. "CancelRequest" (null if none)
+    String responseType       // e.g. "SubscriptionDto" (unwrapped from ResponseEntity<T>)
 ) {}
+```
+
+### `GET /agentic-docs/api/endpoints`
+
+Returns the full list of scanned `ApiEndpointMetadata` as JSON. Used by the API Explorer panel in the React UI.
+
+```bash
+curl http://localhost:8080/agentic-docs/api/endpoints
 ```

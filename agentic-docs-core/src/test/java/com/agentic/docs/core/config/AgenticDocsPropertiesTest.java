@@ -31,6 +31,8 @@ class AgenticDocsPropertiesTest {
                 true,
                 5,
                 null,
+                "./agentic-docs-vector-store.json",
+                new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173"))
         );
     }
@@ -67,6 +69,8 @@ class AgenticDocsPropertiesTest {
     @DisplayName("custom topK value is stored correctly")
     void customTopK_isStoredCorrectly() {
         AgenticDocsProperties props = new AgenticDocsProperties(true, 10, null,
+                "./agentic-docs-vector-store.json",
+                new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173")));
         assertThat(props.topK()).isEqualTo(10);
     }
@@ -76,6 +80,8 @@ class AgenticDocsPropertiesTest {
     void customSystemPrompt_isStoredCorrectly() {
         AgenticDocsProperties props = new AgenticDocsProperties(true, 5,
                 "My custom prompt with {context}",
+                "./agentic-docs-vector-store.json",
+                new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173")));
         assertThat(props.systemPrompt()).isEqualTo("My custom prompt with {context}");
     }
@@ -85,7 +91,9 @@ class AgenticDocsPropertiesTest {
     void customCors_isStoredCorrectly() {
         AgenticDocsProperties.Cors cors = new AgenticDocsProperties.Cors(
                 List.of("https://myapp.com", "https://staging.myapp.com"));
-        AgenticDocsProperties props = new AgenticDocsProperties(true, 5, null, cors);
+        AgenticDocsProperties props = new AgenticDocsProperties(true, 5, null,
+                "./agentic-docs-vector-store.json",
+                new AgenticDocsProperties.RateLimit(true, 20), cors);
 
         assertThat(props.cors().allowedOrigins())
                 .containsExactlyInAnyOrder("https://myapp.com", "https://staging.myapp.com");
@@ -95,6 +103,8 @@ class AgenticDocsPropertiesTest {
     @DisplayName("enabled=false is stored correctly")
     void enabled_false_isStoredCorrectly() {
         AgenticDocsProperties props = new AgenticDocsProperties(false, 5, null,
+                "./agentic-docs-vector-store.json",
+                new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173")));
         assertThat(props.enabled()).isFalse();
     }

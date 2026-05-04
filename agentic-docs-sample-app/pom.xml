@@ -45,6 +45,18 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <!--
+                Allow Mockito/Byte Buddy to run on Java 25+ (experimental mode).
+                Byte Buddy officially supports up to Java 24; this flag unlocks
+                support for newer JVM versions without upgrading Mockito.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
+            <!--
                 Exclude this sample application from Maven Central deployment.
                 It is a runnable demo, not a publishable library artifact.
                 Run: mvn clean deploy -P release  from the root — this module will be skipped.
