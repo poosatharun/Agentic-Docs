@@ -8,12 +8,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Collections;
 
 /**
  * Per-IP rate limiter using Bucket4j's in-memory token-bucket algorithm.
- * Each IP gets its own bucket (refilled every 60 s). Buckets are stored in-memory;
- * for clustered deployments swap {@link ConcurrentHashMap} with a Bucket4j-Redis proxy.
+ * Each IP gets its own bucket (refilled every 60 s). Buckets are stored in a
+ * size-bounded LRU map (max 10,000 entries) to prevent unbounded memory growth.
+ * For clustered deployments swap with a Bucket4j-Redis proxy.
  *
  * Configured via {@code agentic.docs.rate-limit.*} in application.properties.
  */
@@ -21,8 +24,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimiterService {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimiterService.class);
+    private static final int MAX_BUCKETS = 10_000;
 
-    private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> buckets = Collections.synchronizedMap(
+            new LinkedHashMap<>(64, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Bucket> eldest) {
+                    return size() > MAX_BUCKETS;
+                }
+            });
     private final AgenticDocsProperties properties;
 
     public RateLimiterService(AgenticDocsProperties properties) {

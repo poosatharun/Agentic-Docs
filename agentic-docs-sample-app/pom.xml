@@ -28,6 +28,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Actuator: exposes /actuator/metrics for live HTTP request metrics (Micrometer) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- Test: Spring Boot integration test support (MockMvc, @SpringBootTest, @MockBean) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

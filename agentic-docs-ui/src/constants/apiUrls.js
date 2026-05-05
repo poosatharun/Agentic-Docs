@@ -7,6 +7,7 @@
  */
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
-export const CHAT_URL        = `${BASE_URL}/agentic-docs/api/chat`
-export const CHAT_STREAM_URL = `${BASE_URL}/agentic-docs/api/chat/stream`
-export const ENDPOINTS_URL   = `${BASE_URL}/agentic-docs/api/endpoints`
+export const CHAT_URL            = `${BASE_URL}/agentic-docs/api/chat`
+export const CHAT_STREAM_URL     = `${BASE_URL}/agentic-docs/api/chat/stream`
+export const ENDPOINTS_URL       = `${BASE_URL}/agentic-docs/api/endpoints`
+export const ENDPOINT_METRICS_URL = `${BASE_URL}/agentic-docs/api/endpoint-metrics`

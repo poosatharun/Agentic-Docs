@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Play, Bot, Tag, Cpu, ArrowRight, Package, CornerDownRight } from 'lucide-react'
-import MethodBadge from './MethodBadge'
-import TryItPanel  from './TryItPanel'
+import MethodBadge    from './MethodBadge'
+import TryItPanel     from './TryItPanel'
+import MetricsBadges  from './MetricsBadges'
 import { methodColor }           from '../constants/methodColors'
 import { buildEndpointAiPrompt } from '../constants/messages'
 
@@ -26,6 +27,7 @@ export default function EndpointRow({ endpoint, onAskAI }) {
       >
         <MethodBadge method={endpoint.httpMethod} />
         <code className="text-slate-300 text-xs font-mono flex-1 truncate tracking-wide">{endpoint.path}</code>
+        <MetricsBadges path={endpoint.path} method={endpoint.httpMethod} />
         {endpoint.description && endpoint.description !== 'No description provided.' && (
           <span className="text-slate-600 text-xs truncate max-w-xs hidden lg:block">{endpoint.description}</span>
         )}

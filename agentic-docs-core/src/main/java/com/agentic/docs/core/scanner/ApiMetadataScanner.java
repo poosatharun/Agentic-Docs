@@ -57,6 +57,7 @@ public class ApiMetadataScanner implements EndpointRepository {
         List<ApiEndpointMetadata> endpoints = handlerMapping.getHandlerMethods().entrySet().stream()
                 .filter(e -> isUserController(e.getValue().getBeanType()))
                 .map(e -> toMetadata(e.getKey(), e.getValue()))
+                .filter(e -> !"/unknown".equals(e.path()))
                 .toList();
 
         this.scannedEndpoints = List.copyOf(endpoints);
@@ -101,10 +102,8 @@ public class ApiMetadataScanner implements EndpointRepository {
     }
 
     private String extractHttpMethod(RequestMappingInfo info) {
-        if (info.getMethodsCondition() != null && !info.getMethodsCondition().getMethods().isEmpty()) {
-            return info.getMethodsCondition().getMethods().iterator().next().name();
-        }
-        return "GET";
+        var methods = info.getMethodsCondition().getMethods();
+        return methods.isEmpty() ? "GET" : methods.iterator().next().name();
     }
 
     /** Extracts names of parameters annotated with {@code annotationType} (PathVariable or RequestParam). */
@@ -128,12 +127,10 @@ public class ApiMetadataScanner implements EndpointRepository {
     }
 
     private String extractRequestBodyType(HandlerMethod handlerMethod) {
-        for (MethodParameter mp : handlerMethod.getMethodParameters()) {
-            if (mp.hasParameterAnnotation(RequestBody.class)) {
-                return mp.getParameterType().getSimpleName();
-            }
-        }
-        return null;
+        return Arrays.stream(handlerMethod.getMethodParameters())
+                .filter(mp -> mp.hasParameterAnnotation(RequestBody.class))
+                .map(mp -> mp.getParameterType().getSimpleName())
+                .findFirst().orElse(null);
     }
 
     private String extractResponseType(HandlerMethod handlerMethod) {

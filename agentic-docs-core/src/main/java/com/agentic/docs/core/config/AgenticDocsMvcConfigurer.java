@@ -9,14 +9,8 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * MVC configuration for Agentic Docs:
- * <ul>
- *   <li>Forwards {@code /}, {@code /agentic-docs}, and {@code /agentic-docs/}
- *       directly to the bundled {@code index.html}</li>
- *   <li>Registers {@link RateLimitInterceptor} for all {@code /agentic-docs/api/**}
- *       endpoints (Gap 1 â€” Architecture: cross-cutting concerns in interceptors)</li>
- *   <li>Registers global CORS rules for all {@code /agentic-docs/api/**} endpoints</li>
- * </ul>
+ * MVC configuration: registers the rate-limit interceptor, UI view controllers,
+ * and CORS rules for all {@code /agentic-docs/api/**} endpoints.
  */
 @Configuration
 public class AgenticDocsMvcConfigurer implements WebMvcConfigurer {

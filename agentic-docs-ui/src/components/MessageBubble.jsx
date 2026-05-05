@@ -25,7 +25,9 @@ function CopyButton({ text }) {
  */
 export default function MessageBubble({ msg, index }) {
   const isUser = msg.role === 'user'
-  const time   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const time   = msg.timestamp
+    ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : ''
 
   return (
     <div className={`flex gap-3 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>

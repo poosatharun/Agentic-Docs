@@ -6,7 +6,6 @@ import com.agentic.docs.core.scanner.ApiEndpointMetadata;
 import com.agentic.docs.core.scanner.EndpointRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
@@ -37,27 +36,11 @@ public class AgenticDocsChatController {
         return ResponseEntity.ok(endpointRepository.getScannedEndpoints());
     }
 
-    @GetMapping("/chat")
-    public ResponseEntity<ChatResponse> chatInfo() {
-        return ResponseEntity
-                .status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new ChatResponse(
-                        "This endpoint only accepts POST requests. " +
-                        "Please use the Agentic Docs UI at /agentic-docs/ " +
-                        "or POST a JSON body: {\"question\": \"\"}"));
-    }
-
     @PostMapping("/chat")
     public ResponseEntity<ChatResponse> chat(@Validated @RequestBody ChatRequest request) {
-        if (request.question() == null || request.question().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(new ChatResponse("Please provide a non-empty question."));
-        }
         log.debug("[AgenticDocs] Received chat request.");
         return ResponseEntity.ok(chatPort.answer(request));
-    }
-
-    /** Streaming chat via SSE. Events: token, done, error. */
+    }    /** Streaming chat via SSE. Events: token, done, error. */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<ServerSentEvent<String>>> chatStream(
             @Validated @RequestBody ChatRequest request) {

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { sendChatMessageStream } from '../api/chatApi'
 
 /**
@@ -7,21 +7,31 @@ import { sendChatMessageStream } from '../api/chatApi'
  * Uses streaming (SSE) to deliver tokens to the UI as they arrive from the LLM,
  * dramatically reducing perceived latency for local Ollama models.
  *
- * @returns {{ messages, loading, sendMessage }}
+ * @returns {{ messages, loading, sendMessage, abort }}
  */
 export function useChat() {
   const [messages, setMessages] = useState([])
   const [loading,  setLoading]  = useState(false)
+  const abortRef = useRef(null)
+
+  // Abort any in-flight stream on unmount
+  useEffect(() => {
+    return () => { abortRef.current?.() }
+  }, [])
 
   const sendMessage = useCallback((question) => {
+    // Abort any previous in-flight stream
+    abortRef.current?.()
+
+    const now = new Date().toISOString()
     // Add the user message immediately
-    setMessages((prev) => [...prev, { role: 'user', content: question }])
+    setMessages((prev) => [...prev, { role: 'user', content: question, timestamp: now }])
     setLoading(true)
 
     // Insert a blank assistant placeholder that we'll fill token-by-token
-    setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
+    setMessages((prev) => [...prev, { role: 'assistant', content: '', timestamp: now }])
 
-    sendChatMessageStream(
+    const abort = sendChatMessageStream(
       question,
       // onToken — append each token to the last (assistant) message
       (token) => {
@@ -61,6 +71,7 @@ export function useChat() {
         })
       }
     )
+    abortRef.current = abort
   }, [])
 
   return { messages, loading, sendMessage }

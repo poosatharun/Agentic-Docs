@@ -1,15 +1,15 @@
 package com.agentic.docs.core.config;
 
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.EventListener;
 
 import java.io.File;
 
@@ -24,10 +24,18 @@ public class VectorStoreConfig {
 
     private static final Logger log = LoggerFactory.getLogger(VectorStoreConfig.class);
 
+    private final ObjectProvider<SimpleVectorStore> storeProvider;
+    private final AgenticDocsProperties properties;
+
+    public VectorStoreConfig(ObjectProvider<SimpleVectorStore> storeProvider,
+                             AgenticDocsProperties properties) {
+        this.storeProvider = storeProvider;
+        this.properties = properties;
+    }
+
     @Bean
     @ConditionalOnMissingBean(VectorStore.class)
-    public SimpleVectorStore vectorStore(EmbeddingModel embeddingModel,
-                                         AgenticDocsProperties properties) {
+    public SimpleVectorStore vectorStore(EmbeddingModel embeddingModel) {
         SimpleVectorStore store = SimpleVectorStore.builder(embeddingModel).build();
 
         File storeFile = new File(properties.vectorStorePath());
@@ -40,8 +48,11 @@ public class VectorStoreConfig {
         return store;
     }
 
-    @EventListener(ContextClosedEvent.class)
-    public void saveOnShutdown(SimpleVectorStore store, AgenticDocsProperties properties) {
+    @PreDestroy
+    public void saveOnShutdown() {
+        SimpleVectorStore store = storeProvider.getIfAvailable();
+        if (store == null) return;
+
         File storeFile = new File(properties.vectorStorePath());
         try {
             store.save(storeFile);

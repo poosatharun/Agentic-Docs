@@ -47,6 +47,15 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Actuator (optional): used by EndpointMetricsController to proxy Micrometer metrics.
+             Marked 'provided' — only active when the host app includes actuator. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
         <!-- ── Rate Limiting ───────────────────────────────────────────────── -->
         <!--
             Bucket4j — token-bucket rate limiting with zero external infrastructure.
