@@ -106,6 +106,7 @@
                     <configuration>
                         <!-- <release> supersedes <source>/<target> and prevents cross-compilation issues -->
                         <release>21</release>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>

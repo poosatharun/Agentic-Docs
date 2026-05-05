@@ -27,7 +27,11 @@ public class AgenticDocsMvcConfigurer implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RateLimitInterceptor(rateLimiterService))
-                .addPathPatterns("/agentic-docs/api/**");
+                .addPathPatterns("/agentic-docs/api/**")
+                .excludePathPatterns(
+                        "/agentic-docs/api/endpoints",
+                        "/agentic-docs/api/endpoint-metrics"
+                );
     }
 
     @Override

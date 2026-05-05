@@ -45,8 +45,8 @@ public class EndpointMetricsController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getMetrics(
-            @RequestParam String uri,
-            @RequestParam String method) {
+            @RequestParam("uri") String uri,
+            @RequestParam("method") String method) {
         try {
             // Total count for this uri+method across all status codes
             MetricsEndpoint.MetricDescriptor all = metricsEndpoint.metric(
