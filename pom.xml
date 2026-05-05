@@ -6,7 +6,7 @@
 
     <groupId>com.agentic.docs</groupId>
     <artifactId>agentic-docs-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>Agentic Docs Parent</name>
     <description>Transforms static API docs into an interactive RAG agent</description>
@@ -24,7 +24,9 @@
         <developer>
             <id>poosatharun</id>
             <name>Poosatha Arun</name>
+            <email>tharun.posa@gmail.com</email>
             <url>https://github.com/poosatharun</url>
+            <roles><role>Lead Developer</role></roles>
         </developer>
     </developers>
 
@@ -32,8 +34,18 @@
         <connection>scm:git:git://github.com/poosatharun/Agentic-Docs.git</connection>
         <developerConnection>scm:git:ssh://github.com/poosatharun/Agentic-Docs.git</developerConnection>
         <url>https://github.com/poosatharun/Agentic-Docs</url>
-        <tag>HEAD</tag>
+        <tag>v1.0.0</tag>
     </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/poosatharun/Agentic-Docs/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>GitHub Actions</system>
+        <url>https://github.com/poosatharun/Agentic-Docs/actions</url>
+    </ciManagement>
 
     <modules>
         <module>agentic-docs-core</module>
@@ -48,7 +60,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>3.4.0</spring-boot.version>
         <spring-ai.version>1.0.0</spring-ai.version>
-
+        <bucket4j.version>8.14.0</bucket4j.version>
     </properties>
 
     <dependencyManagement>
@@ -78,10 +90,51 @@
                 <artifactId>spring-ai-starter-model-ollama</artifactId>
                 <version>${spring-ai.version}</version>
             </dependency>
+            <!-- Rate limiting: token-bucket, zero external infrastructure -->
+            <dependency>
+                <groupId>com.bucket4j</groupId>
+                <artifactId>bucket4j_jdk17-core</artifactId>
+                <version>${bucket4j.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <build>
+        <!--
+            Source and Javadoc JARs are attached unconditionally so that every
+            `mvn deploy` — with or without -P release — satisfies Maven Central's
+            requirement for sources and documentation artifacts.
+        -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals><goal>jar-no-fork</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <!-- html and syntax checks only; avoids false positives on @param ordering -->
+                    <doclint>html,syntax</doclint>
+                    <quiet>true</quiet>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals><goal>jar</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -108,31 +161,6 @@
                         <release>21</release>
                         <parameters>true</parameters>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.3.1</version>
-                    <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <goals><goal>jar-no-fork</goal></goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.7.0</version>
-                    <configuration>
-                        <doclint>none</doclint>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals><goal>jar</goal></goals>
-                        </execution>
-                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -173,20 +201,14 @@
         Requires:
           - A GPG key set up locally (run: gpg -gen-key)
           - Sonatype Central Portal credentials in ~/.m2/settings.xml under server id 'central'
+        Sources and Javadoc JARs are always produced (see main <build> section above).
+        This profile adds GPG signing and wires the Central Publishing plugin.
     -->
     <profiles>
         <profile>
             <id>release</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

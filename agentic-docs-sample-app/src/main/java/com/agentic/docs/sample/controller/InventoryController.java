@@ -3,6 +3,7 @@ package com.agentic.docs.sample.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,14 +19,14 @@ public class InventoryController {
     public ResponseEntity<Map<String, Object>> getStockLevels(
             @RequestParam(required = false) String sku,
             @RequestParam(required = false) String warehouseId) {
-        return ResponseEntity.ok(Map.of(
-                "sku", sku,
-                "totalStock", 1500,
-                "warehouses", List.of(
-                        Map.of("warehouseId", "WH-001", "location", "Chicago", "quantity", 800),
-                        Map.of("warehouseId", "WH-002", "location", "Dallas", "quantity", 700)
-                )
+        Map<String, Object> stockResponse = new HashMap<>();
+        stockResponse.put("sku", sku);
+        stockResponse.put("totalStock", 1500);
+        stockResponse.put("warehouses", List.of(
+                Map.of("warehouseId", "WH-001", "location", "Chicago", "quantity", 800),
+                Map.of("warehouseId", "WH-002", "location", "Dallas", "quantity", 700)
         ));
+        return ResponseEntity.ok(stockResponse);
     }
 
     @PostMapping("/transfers")

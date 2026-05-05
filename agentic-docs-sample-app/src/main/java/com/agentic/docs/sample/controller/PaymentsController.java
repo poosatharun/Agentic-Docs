@@ -3,6 +3,7 @@ package com.agentic.docs.sample.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,14 +34,21 @@ public class PaymentsController {
     public ResponseEntity<Map<String, Object>> terminateSubscription(
             @PathVariable String id,
             @RequestBody Map<String, Object> request) {
-        return ResponseEntity.ok(Map.of("subscriptionId", id, "status", "TERMINATED", "refundType", request.get("refundType")));
+        Map<String, Object> terminateResponse = new HashMap<>();
+        terminateResponse.put("subscriptionId", id);
+        terminateResponse.put("status", "TERMINATED");
+        terminateResponse.put("refundType", request.get("refundType"));
+        return ResponseEntity.ok(terminateResponse);
     }
 
     @PutMapping("/subscriptions/{id}/plan")
     public ResponseEntity<Map<String, Object>> changePlan(
             @PathVariable String id,
             @RequestBody Map<String, Object> request) {
-        return ResponseEntity.ok(Map.of("id", id, "newPlan", request.get("newPlan")));
+        Map<String, Object> planResponse = new HashMap<>();
+        planResponse.put("id", id);
+        planResponse.put("newPlan", request.get("newPlan"));
+        return ResponseEntity.ok(planResponse);
     }
 
     @PostMapping("/billing/refund/calculate")

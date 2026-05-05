@@ -3,6 +3,7 @@ package com.agentic.docs.sample.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,11 +109,11 @@ public class ProductController {
     public ResponseEntity<Map<String, Object>> updatePricing(
             @PathVariable String productId,
             @RequestBody Map<String, Object> request) {
-        return ResponseEntity.ok(Map.of(
-                "productId", productId,
-                "price", request.getOrDefault("price", 149.99),
-                "salePrice", request.getOrDefault("salePrice", null),
-                "priceUpdated", true
-        ));
+        Map<String, Object> pricingResponse = new HashMap<>();
+        pricingResponse.put("productId", productId);
+        pricingResponse.put("price", request.getOrDefault("price", 149.99));
+        pricingResponse.put("salePrice", request.getOrDefault("salePrice", null));
+        pricingResponse.put("priceUpdated", true);
+        return ResponseEntity.ok(pricingResponse);
     }
 }

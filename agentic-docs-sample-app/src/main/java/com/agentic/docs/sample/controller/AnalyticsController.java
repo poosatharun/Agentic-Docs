@@ -3,6 +3,7 @@ package com.agentic.docs.sample.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +35,10 @@ public class AnalyticsController {
             @RequestParam(required = false) String toDate,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(Map.of("products", List.of(), "period", Map.of("from", fromDate, "to", toDate)));
+        Map<String, Object> period = new HashMap<>();
+        period.put("from", fromDate);
+        period.put("to", toDate);
+        return ResponseEntity.ok(Map.of("products", List.of(), "period", period));
     }
 
     @GetMapping("/customers/metrics")
