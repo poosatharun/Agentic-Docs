@@ -30,6 +30,17 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!--
+            Ollama LLM + embedding provider.
+            Declared explicitly here because it is marked <optional> in the starter
+            (library consumers should choose their own LLM). The sample app always
+            uses Ollama, so it must pull this in directly.
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
         <!-- Actuator: exposes /actuator/metrics for live HTTP request metrics (Micrometer) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

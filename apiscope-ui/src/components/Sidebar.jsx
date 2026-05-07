@@ -1,13 +1,13 @@
-import { Zap, BookOpen, Bot, RotateCcw, Github, Activity, Workflow } from 'lucide-react'
+import { RotateCcw, Activity } from 'lucide-react'
 
 /**
  * Left sidebar navigation — contains branding, tab nav links, and footer status.
  */
 export default function Sidebar({ tab, onTab, onReset }) {
   const navItems = [
-    { id: 'explorer', icon: BookOpen, label: 'API Explorer', desc: 'Browse endpoints'       },
-    { id: 'chat',     icon: Bot,      label: 'AI Chat',      desc: 'Ask questions'          },
-    { id: 'flow',     icon: Workflow, label: 'Flow Tracer',  desc: 'Live execution trace'   },
+    { id: 'explorer', label: 'API Explorer', desc: 'Browse endpoints'       },
+    { id: 'chat',     label: 'AI Chat',      desc: 'Ask questions'          },
+    { id: 'flow',     label: 'Flow Tracer',  desc: 'Live execution trace'   },
   ]
 
   return (
@@ -15,9 +15,6 @@ export default function Sidebar({ tab, onTab, onReset }) {
       {/* Brand */}
       <div className="px-5 py-5 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-900/40">
-            <Zap size={17} className="text-white" fill="white" />
-          </div>
           <div>
             <h1 className="text-white font-bold text-sm tracking-tight">APIScope</h1>
             <p className="text-violet-400/70 text-[10px] font-medium uppercase tracking-widest">AI API Assistant</p>
@@ -28,7 +25,7 @@ export default function Sidebar({ tab, onTab, onReset }) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         <p className="px-2 mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Navigation</p>
-        {navItems.map(({ id, icon: Icon, label, desc }) => {
+        {navItems.map(({ id, label, desc }) => {
           const active = tab === id
           return (
             <button
@@ -40,11 +37,6 @@ export default function Sidebar({ tab, onTab, onReset }) {
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
-              <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
-                active ? 'bg-violet-600 shadow-sm shadow-violet-900' : 'bg-white/5 group-hover:bg-white/10'
-              }`}>
-                <Icon size={15} className={active ? 'text-white' : 'text-slate-400 group-hover:text-white'} />
-              </div>
               <div>
                 <p className={`text-xs font-semibold leading-tight ${active ? 'text-white' : ''}`}>{label}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">{desc}</p>
