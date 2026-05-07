@@ -1,10 +1,14 @@
 package com.agentic.docs.flow.autoconfigure;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.web.client.RestClient;
 
 /**
  * Spring Boot AutoConfiguration for the Agentic Docs Flow Tracer.
@@ -16,14 +20,11 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  * </ul>
  *
  * <p>{@code matchIfMissing=false} means Flow Tracer is <strong>OFF by default</strong>
- * in production — teams must explicitly opt in. This prevents AOP interception overhead
- * in environments where tracing is not needed.
+ * — teams must explicitly opt in.
  *
- * <p>To enable in development / sample app:
- * <pre>
- * # application.properties
- * agentic.docs.flow.enabled=true
- * </pre>
+ * <p>Registers shared infrastructure beans ({@code ObjectMapper}, {@code RestClient})
+ * only when the host application has not already provided them, satisfying
+ * {@code @ConditionalOnMissingBean}.
  */
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -36,7 +37,25 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableAspectJAutoProxy
 @ComponentScan("com.agentic.docs.flow")
 public class AgenticDocsFlowAutoConfiguration {
-    // All beans registered via @ComponentScan.
-    // FlowAspect, FlowSseRegistry, FlowExecutorService, FlowController
-    // are discovered automatically from com.agentic.docs.flow.*
+
+    /**
+     * Shared {@link ObjectMapper} injected into {@code FlowSseRegistry} and
+     * {@code TraceSerializer}. Falls back to any bean already in the context.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ObjectMapper flowObjectMapper() {
+        return new ObjectMapper();
+    }
+
+    /**
+     * Shared {@link RestClient} injected into {@code FlowExecutorService}.
+     * Falls back to any bean already in the context.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public RestClient flowRestClient() {
+        return RestClient.create();
+    }
 }
+

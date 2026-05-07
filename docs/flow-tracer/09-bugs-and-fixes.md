@@ -282,3 +282,79 @@ root `pom.xml` are listed in dependency order:
 | 3 | `@Operation` import not on classpath | `OrderFlowController.java` | Build failure | ✅ Fixed |
 | 4 | Bare `&` in Javadoc comments | Multiple controllers | Build failure | ✅ Fixed |
 | 5 | `agentic-docs-flow` not in local `.m2` | Root `pom.xml` / build order | Build failure | ✅ Fixed |
+
+---
+
+## Refactor 6 — SOLID Principle Violations (Design Debt)
+
+### Problem
+
+After the initial implementation was working, a SOLID analysis identified
+four violations across the five Java classes:
+
+| Principle | Violation |
+|---|---|
+| **S** — Single Responsibility | `FlowAspect` owned JSON serialisation + error formatting + AOP interception |
+| **O** — Open/Closed | Adding a second transport (e.g. WebSocket) required editing `FlowAspect`, `FlowExecutorService`, and `FlowController` |
+| **I** — Interface Segregation | `FlowSseRegistry` exposed all methods to all consumers even though no consumer needed all of them |
+| **D** — Dependency Inversion | `FlowAspect`, `FlowController`, and `FlowExecutorService` all injected the concrete `FlowSseRegistry` class |
+
+### Fix
+
+Four targeted changes:
+
+**1. Extract `TraceSerializer` (SRP)**
+All JSON serialization and error-message formatting moved out of `FlowAspect`
+into a dedicated `@Component`. `FlowAspect` calls `serializer.serializeArgs()`,
+`serializer.serializeValue()`, and `serializer.buildErrorMessage()`.
+
+**2. Extract `FlowUrlBuilder` (SRP)**
+URL construction and path-parameter substitution moved out of `FlowExecutorService`
+into a dedicated `@Component`. `FlowExecutorService` calls `urlBuilder.build(request)`.
+
+**3. Introduce `spi/` interfaces (ISP + DIP)**
+
+```java
+// Consumed by FlowAspect + FlowExecutorService
+public interface TraceEventSink {
+    void pushStep(String traceId, TraceEvent event);
+    void pushDone(String traceId, FlowDoneEvent event);
+    void pushError(String traceId, String message);
+}
+
+// Consumed by FlowController only
+public interface TraceEmitterProvider {
+    void register(String traceId);
+    SseEmitter attach(String traceId);
+}
+```
+
+`FlowSseRegistry` implements both. Each consumer sees only the methods it needs.
+
+**4. Inject `ObjectMapper` and `RestClient` as `@Bean` (DIP)**
+Both were previously instantiated inline with `new ObjectMapper()` and
+`RestClient.create()`. `AgenticDocsFlowAutoConfiguration` now declares them as
+`@Bean @ConditionalOnMissingBean`, making them overridable.
+
+### Files Changed
+
+- **New:** `spi/TraceEventSink.java`, `spi/TraceEmitterProvider.java`
+- **New:** `serializer/TraceSerializer.java`, `url/FlowUrlBuilder.java`
+- **Modified:** `registry/FlowSseRegistry.java` — `implements TraceEventSink, TraceEmitterProvider`; `ObjectMapper` injected
+- **Modified:** `aspect/FlowAspect.java` — injects `TraceEventSink` + `TraceSerializer`
+- **Modified:** `controller/FlowController.java` — injects `TraceEmitterProvider`
+- **Modified:** `executor/FlowExecutorService.java` — injects `TraceEventSink`, `FlowUrlBuilder`, `RestClient`
+- **Modified:** `autoconfigure/AgenticDocsFlowAutoConfiguration.java` — `@Bean ObjectMapper`, `@Bean RestClient`
+
+---
+
+## Summary Table
+
+| # | Bug / Refactor | Where | Impact | Status |
+|---|---|---|---|---|
+| 1 | AOP pointcut excludes sample app | `FlowAspect.java` | No steps visible | ✅ Fixed |
+| 2 | Step cards in wrong order | `FlowTracer.jsx` | Confusing call chain | ✅ Fixed |
+| 3 | `@Operation` import not on classpath | `OrderFlowController.java` | Build failure | ✅ Fixed |
+| 4 | Bare `&` in Javadoc comments | Multiple controllers | Build failure | ✅ Fixed |
+| 5 | `agentic-docs-flow` not in local `.m2` | Root `pom.xml` / build order | Build failure | ✅ Fixed |
+| 6 | SOLID violations (S, O, I, D) | `FlowAspect`, `FlowSseRegistry`, `FlowExecutorService`, `FlowController` | Design debt | ✅ Refactored |

@@ -36,8 +36,7 @@ When this property is `false` (or absent), **no Spring beans are registered**:
 
 ## Server Port Detection
 
-`FlowExecutorService` fires an HTTP request to `localhost:{server.port}` to
-execute the target endpoint. It reads the port from Spring's environment:
+`FlowUrlBuilder` builds the target URL as `http://localhost:{server.port}`. It reads the port from Spring's environment:
 
 ```java
 @Value("${server.port:8080}")
@@ -68,10 +67,21 @@ com.agentic.docs.core.autoconfigure.AgenticDocsAutoConfiguration
 com.agentic.docs.flow.autoconfigure.AgenticDocsFlowAutoConfiguration
 ```
 
-This file lives in `agentic-docs-spring-boot-starter` (the JAR that bundles
-both `agentic-docs-core` and `agentic-docs-flow`). Any application that
-adds the starter as a Maven dependency gets Flow Tracer available — but only
-activated when the property is set.
+`AgenticDocsFlowAutoConfiguration` also declares two infrastructure beans with
+`@ConditionalOnMissingBean` so they don't conflict with the host application:
+
+```java
+@Bean
+@ConditionalOnMissingBean
+public ObjectMapper flowObjectMapper() { return new ObjectMapper(); }
+
+@Bean
+@ConditionalOnMissingBean
+public RestClient flowRestClient() { return RestClient.create(); }
+```
+
+If the host application already exposes an `ObjectMapper` or `RestClient` bean,
+those will be used instead.
 
 ---
 

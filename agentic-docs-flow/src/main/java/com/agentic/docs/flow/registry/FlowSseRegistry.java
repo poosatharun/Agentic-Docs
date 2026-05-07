@@ -2,6 +2,8 @@ package com.agentic.docs.flow.registry;
 
 import com.agentic.docs.flow.model.FlowDoneEvent;
 import com.agentic.docs.flow.model.TraceEvent;
+import com.agentic.docs.flow.spi.TraceEmitterProvider;
+import com.agentic.docs.flow.spi.TraceEventSink;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -30,17 +32,21 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * </ol>
  */
 @Component
-public class FlowSseRegistry {
+public class FlowSseRegistry implements TraceEventSink, TraceEmitterProvider {
 
     private static final Logger log = LoggerFactory.getLogger(FlowSseRegistry.class);
 
     /** SSE timeout — 60 seconds is generous for any real API chain. */
     private static final long SSE_TIMEOUT_MS = 60_000L;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     /** Holds per-trace state. */
     private final Map<String, TraceEntry> registry = new ConcurrentHashMap<>();
+
+    public FlowSseRegistry(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     // ── Public API ────────────────────────────────────────────────────────────
 

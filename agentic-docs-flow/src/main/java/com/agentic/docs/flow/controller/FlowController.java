@@ -2,7 +2,7 @@ package com.agentic.docs.flow.controller;
 
 import com.agentic.docs.flow.executor.FlowExecutorService;
 import com.agentic.docs.flow.model.FlowRequest;
-import com.agentic.docs.flow.registry.FlowSseRegistry;
+import com.agentic.docs.flow.spi.TraceEmitterProvider;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +32,11 @@ import java.util.UUID;
 @RequestMapping("/agentic-docs/api/flow")
 public class FlowController {
 
-    private final FlowSseRegistry    registry;
+    private final TraceEmitterProvider  emitterProvider;
     private final FlowExecutorService executor;
 
-    public FlowController(FlowSseRegistry registry, FlowExecutorService executor) {
-        this.registry = registry;
+    public FlowController(TraceEmitterProvider emitterProvider, FlowExecutorService executor) {
+        this.emitterProvider = emitterProvider;
         this.executor = executor;
     }
 
@@ -48,17 +48,13 @@ public class FlowController {
     @PostMapping("/execute")
     public ResponseEntity<Map<String, String>> execute(@RequestBody FlowRequest request) {
         String traceId = UUID.randomUUID().toString();
-        registry.register(traceId);
+        emitterProvider.register(traceId);
         executor.executeAsync(traceId, request);
         return ResponseEntity.accepted().body(Map.of("traceId", traceId));
     }
 
-    /**
-     * SSE endpoint — browser connects here after receiving the {@code traceId}.
-     * Replays any events buffered before the connection arrived, then streams live.
-     */
     @GetMapping(value = "/trace/{traceId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter trace(@PathVariable String traceId) {
-        return registry.attach(traceId);
+        return emitterProvider.attach(traceId);
     }
 }
