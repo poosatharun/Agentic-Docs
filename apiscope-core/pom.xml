@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.github.poosatharun</groupId>
+        <groupId>io.github.tharun423</groupId>
         <artifactId>apiscope-parent</artifactId>
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
     <name>APIScope Core</name>
     <description>Core RAG pipeline, endpoint scanner, vector store integration, and REST API for Agentic Docs.</description>
-    <url>https://github.com/poosatharun/Agentic-Docs</url>
+    <url>https://github.com/tharun423/Agentic-Docs</url>
 
     <dependencies>
         <!-- Spring Web MVC — provided by the host app -->

@@ -48,7 +48,7 @@ agentic-docs/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/poosatharun/Agentic-Docs.git
+git clone https://github.com/tharun423/Agentic-Docs.git
 cd Agentic-Docs
 ```
 
@@ -227,7 +227,7 @@ In large companies, developers waste hours trying to understand complex internal
 
 ---
 
-*Built for the 2026 Open Source Community.* | **APIScope** by [@poosatharun](https://github.com/poosatharun)
+*Built for the 2026 Open Source Community.* | **APIScope** by [@tharun423](https://github.com/tharun423)
 
 ---
 

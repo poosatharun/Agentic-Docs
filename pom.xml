@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.poosatharun</groupId>
+    <groupId>io.github.tharun423</groupId>
     <artifactId>apiscope-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>APIScope Parent</name>
     <description>APIScope — Inspect, explore and trace your Spring Boot APIs with AI-powered documentation and real-time execution flow visualization</description>
-    <url>https://github.com/poosatharun/APIScope</url>
+    <url>https://github.com/tharun423/APIScope</url>
 
     <licenses>
         <license>
@@ -22,29 +22,29 @@
 
     <developers>
         <developer>
-            <id>poosatharun</id>
+            <id>tharun423</id>
             <name>Poosatha Arun</name>
             <email>tharun.posa@gmail.com</email>
-            <url>https://github.com/poosatharun</url>
+            <url>https://github.com/tharun423</url>
             <roles><role>Lead Developer</role></roles>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/poosatharun/Agentic-Docs.git</connection>
-        <developerConnection>scm:git:ssh://github.com/poosatharun/Agentic-Docs.git</developerConnection>
-        <url>https://github.com/poosatharun/Agentic-Docs</url>
+        <connection>scm:git:git://github.com/tharun423/Agentic-Docs.git</connection>
+        <developerConnection>scm:git:ssh://github.com/tharun423/Agentic-Docs.git</developerConnection>
+        <url>https://github.com/tharun423/Agentic-Docs</url>
         <tag>v1.0.0</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/poosatharun/Agentic-Docs/issues</url>
+        <url>https://github.com/tharun423/Agentic-Docs/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>GitHub Actions</system>
-        <url>https://github.com/poosatharun/Agentic-Docs/actions</url>
+        <url>https://github.com/tharun423/Agentic-Docs/actions</url>
     </ciManagement>
 
     <modules>
