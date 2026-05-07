@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.agentic.docs</groupId>
-    <artifactId>agentic-docs-parent</artifactId>
+    <groupId>io.github.poosatharun</groupId>
+    <artifactId>apiscope-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
-    <name>Agentic Docs Parent</name>
-    <description>Transforms static API docs into an interactive RAG agent</description>
-    <url>https://github.com/poosatharun/Agentic-Docs</url>
+    <name>APIScope Parent</name>
+    <description>APIScope — Inspect, explore and trace your Spring Boot APIs with AI-powered documentation and real-time execution flow visualization</description>
+    <url>https://github.com/poosatharun/APIScope</url>
 
     <licenses>
         <license>
@@ -31,27 +31,27 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/poosatharun/Agentic-Docs.git</connection>
-        <developerConnection>scm:git:ssh://github.com/poosatharun/Agentic-Docs.git</developerConnection>
-        <url>https://github.com/poosatharun/Agentic-Docs</url>
+        <connection>scm:git:git://github.com/poosatharun/APIScope.git</connection>
+        <developerConnection>scm:git:ssh://github.com/poosatharun/APIScope.git</developerConnection>
+        <url>https://github.com/poosatharun/APIScope</url>
         <tag>v1.0.0</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/poosatharun/Agentic-Docs/issues</url>
+        <url>https://github.com/poosatharun/APIScope/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>GitHub Actions</system>
-        <url>https://github.com/poosatharun/Agentic-Docs/actions</url>
+        <url>https://github.com/poosatharun/APIScope/actions</url>
     </ciManagement>
 
     <modules>
-        <module>agentic-docs-core</module>
-        <module>agentic-docs-flow</module>
-        <module>agentic-docs-spring-boot-starter</module>
-        <module>agentic-docs-sample-app</module>
+        <module>apiscope-core</module>
+        <module>apiscope-flow</module>
+        <module>apiscope-spring-boot-starter</module>
+        <module>apiscope-sample-app</module>
     </modules>
 
     <properties>

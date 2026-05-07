@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.poosatharun</groupId>
+        <artifactId>apiscope-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>apiscope-flow</artifactId>
+    <packaging>jar</packaging>
+    <name>APIScope Flow</name>
+    <description>
+        Real-time API execution flow visualizer for Agentic Docs.
+        Uses Spring AOP to intercept method calls and SSE to stream live trace events to the UI.
+        Bundled into agentic-docs-spring-boot-starter — enabled via agentic.docs.flow.enabled=true.
+    </description>
+    <url>https://github.com/poosatharun/Agentic-Docs</url>
+
+    <dependencies>
+        <!-- Spring Web MVC — provided by the host app -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- AOP support — brings aspectjweaver which enables @Aspect processing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <!-- AutoConfiguration support — provided by the host starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            Generates spring-autoconfigure-metadata.properties at build time.
+            Allows Spring Boot to skip condition evaluation for inactive auto-configs.
+            Must be optional so it is not transitive.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Test support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

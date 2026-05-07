@@ -1,4 +1,4 @@
-# Agentic Docs — Documentation Index
+# APIScope — Documentation Index
 
 > **Version:** 1.0.0-SNAPSHOT  
 > **Stack:** Java 21 · Spring Boot 3.4 · Spring AI 1.0.0 GA · React 18 · Tailwind CSS v4  
@@ -11,7 +11,7 @@
 
 | File | What it covers |
 |---|---|
-| [01-project-overview.md](./01-project-overview.md) | What Agentic Docs is, the problem it solves, core value proposition |
+| [01-project-overview.md](./01-project-overview.md) | What APIScope is, the problem it solves, core value proposition |
 | [02-architecture.md](./02-architecture.md) | Module structure, component diagram, startup + chat data-flow |
 | [03-backend-deep-dive.md](./03-backend-deep-dive.md) | Every Java class — design decisions and code walkthrough |
 | [04-frontend-deep-dive.md](./04-frontend-deep-dive.md) | React component tree, UI decisions, build pipeline |

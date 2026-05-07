@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.poosatharun</groupId>
+        <artifactId>apiscope-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>apiscope-spring-boot-starter</artifactId>
+    <packaging>jar</packaging>
+    <name>APIScope Spring Boot Starter</name>
+    <description>Spring Boot auto-configuration starter that wires up Agentic Docs with zero configuration for Ollama.</description>
+    <url>https://github.com/poosatharun/Agentic-Docs</url>
+
+    <dependencies>
+        <!-- AutoConfiguration support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <!-- Core scanning + chat logic -->
+        <dependency>
+            <groupId>io.github.poosatharun</groupId>
+            <artifactId>apiscope-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Flow Tracer: AOP + SSE real-time execution visualizer (opt-in via agentic.docs.flow.enabled=true) -->
+        <dependency>
+            <groupId>io.github.poosatharun</groupId>
+            <artifactId>apiscope-flow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-model -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+        </dependency>
+
+        <!-- SimpleVectorStore is provided transitively via spring-ai-vector-store in the core module -->
+
+        <!-- Ollama provider (local, free, offline) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!--
+            Generates spring-autoconfigure-metadata.properties at build time.
+            Allows Spring Boot to skip condition evaluation for inactive auto-configs,
+            improving startup performance. Must be optional so it is not transitive.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

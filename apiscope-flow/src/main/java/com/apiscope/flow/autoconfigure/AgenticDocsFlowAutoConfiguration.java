@@ -1,0 +1,61 @@
+package com.apiscope.flow.autoconfigure;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.web.client.RestClient;
+
+/**
+ * Spring Boot AutoConfiguration for the Agentic Docs Flow Tracer.
+ *
+ * <p>Activated only when:
+ * <ul>
+ *   <li>The application is a Servlet web application.</li>
+ *   <li>{@code apiscope.flow.enabled=true} is set in {@code application.properties}.</li>
+ * </ul>
+ *
+ * <p>{@code matchIfMissing=false} means Flow Tracer is <strong>OFF by default</strong>
+ * — teams must explicitly opt in.
+ *
+ * <p>Registers shared infrastructure beans ({@code ObjectMapper}, {@code RestClient})
+ * only when the host application has not already provided them, satisfying
+ * {@code @ConditionalOnMissingBean}.
+ */
+@AutoConfiguration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnProperty(
+        prefix      = "apiscope.flow",
+        name        = "enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
+@EnableAspectJAutoProxy
+@ComponentScan("com.apiscope.flow")
+public class AgenticDocsFlowAutoConfiguration {
+
+    /**
+     * Shared {@link ObjectMapper} injected into {@code FlowSseRegistry} and
+     * {@code TraceSerializer}. Falls back to any bean already in the context.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ObjectMapper flowObjectMapper() {
+        return new ObjectMapper();
+    }
+
+    /**
+     * Shared {@link RestClient} injected into {@code FlowExecutorService}.
+     * Falls back to any bean already in the context.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public RestClient flowRestClient() {
+        return RestClient.create();
+    }
+}
+
