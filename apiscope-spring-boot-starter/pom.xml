@@ -46,10 +46,15 @@
 
         <!-- SimpleVectorStore is provided transitively via spring-ai-vector-store in the core module -->
 
-        <!-- Ollama provider (local, free, offline) -->
+        <!--
+            Ollama provider (local, free, offline).
+            Marked optional so consumers that use a different LLM (OpenAI, Azure, etc.)
+            are not forced to pull in Ollama dependencies.
+        -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!--

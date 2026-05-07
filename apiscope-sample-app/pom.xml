@@ -14,6 +14,8 @@
     <artifactId>apiscope-sample-app</artifactId>
     <packaging>jar</packaging>
     <name>APIScope Sample App</name>
+    <description>Runnable demo application showcasing APIScope — AI-powered API exploration and real-time flow tracing for Spring Boot.</description>
+    <url>https://github.com/poosatharun/Agentic-Docs</url>
 
     <dependencies>
         <dependency>

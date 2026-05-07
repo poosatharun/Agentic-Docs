@@ -31,20 +31,20 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/poosatharun/APIScope.git</connection>
-        <developerConnection>scm:git:ssh://github.com/poosatharun/APIScope.git</developerConnection>
-        <url>https://github.com/poosatharun/APIScope</url>
+        <connection>scm:git:git://github.com/poosatharun/Agentic-Docs.git</connection>
+        <developerConnection>scm:git:ssh://github.com/poosatharun/Agentic-Docs.git</developerConnection>
+        <url>https://github.com/poosatharun/Agentic-Docs</url>
         <tag>v1.0.0</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/poosatharun/APIScope/issues</url>
+        <url>https://github.com/poosatharun/Agentic-Docs/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>GitHub Actions</system>
-        <url>https://github.com/poosatharun/APIScope/actions</url>
+        <url>https://github.com/poosatharun/Agentic-Docs/actions</url>
     </ciManagement>
 
     <modules>
@@ -188,14 +188,6 @@
         </repository>
     </repositories>
 
-    <distributionManagement>
-        <repository>
-            <id>central</id>
-            <name>Maven Central via Sonatype Central Portal</name>
-            <url>https://central.sonatype.com/api/v1/publisher/upload</url>
-        </repository>
-    </distributionManagement>
-
     <!--
         Release profile: activate with -P release
         mvn clean deploy -P release
@@ -224,6 +216,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
+                        <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>false</autoPublish>
