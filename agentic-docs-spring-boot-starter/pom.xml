@@ -31,6 +31,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Flow Tracer: AOP + SSE real-time execution visualizer (opt-in via agentic.docs.flow.enabled=true) -->
+        <dependency>
+            <groupId>com.agentic.docs</groupId>
+            <artifactId>agentic-docs-flow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Source: https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-model -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

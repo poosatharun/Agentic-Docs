@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Search, BookOpen, Layers, AlertCircle } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Search, BookOpen, Layers, AlertCircle, Zap, CheckCircle2, Loader2 } from 'lucide-react'
 import EndpointRow  from './EndpointRow'
 import { methodColor } from '../constants/methodColors'
 import { useEndpoints } from '../hooks/useEndpoints'
+import { warmupAllEndpoints } from '../api/warmupApi'
 
 /**
  * "API Explorer" tab — shows all discovered REST endpoints grouped by controller.
@@ -11,6 +12,20 @@ export default function ApiExplorer({ onAskAI }) {
   const { endpoints, loading, error } = useEndpoints()
   const [search,       setSearch]       = useState('')
   const [filterMethod, setFilterMethod] = useState('ALL')
+
+  // Warm-up state: idle | running | done
+  const [warmup, setWarmup] = useState({ state: 'idle', done: 0, total: 0, ok: 0, failed: 0 })
+
+  const handleWarmup = useCallback(async () => {
+    if (warmup.state === 'running' || endpoints.length === 0) return
+    setWarmup({ state: 'running', done: 0, total: endpoints.length, ok: 0, failed: 0 })
+    const result = await warmupAllEndpoints(endpoints, (done, total) => {
+      setWarmup((prev) => ({ ...prev, done, total }))
+    })
+    setWarmup({ state: 'done', done: endpoints.length, total: endpoints.length, ...result })
+    // Auto-reset label after 5 s so user can re-run
+    setTimeout(() => setWarmup({ state: 'idle', done: 0, total: 0, ok: 0, failed: 0 }), 5000)
+  }, [endpoints, warmup.state])
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center flex-1 gap-4 text-slate-400 bg-[#0f1117]">
@@ -70,7 +85,7 @@ export default function ApiExplorer({ onAskAI }) {
             <h2 className="text-sm font-semibold text-white">API Explorer</h2>
             <p className="text-[11px] text-slate-500">{endpoints.length} endpoints discovered</p>
           </div>
-          {/* Stats badges */}
+          {/* Stats badges + warm-up button */}
           <div className="flex items-center gap-2">
             {['GET','POST','PUT','DELETE'].filter(m => endpoints.some(e => e.httpMethod === m)).map(m => {
               const c = methodColor(m)
@@ -82,6 +97,37 @@ export default function ApiExplorer({ onAskAI }) {
                 </div>
               )
             })}
+
+            {/* Warm-up button */}
+            <button
+              onClick={handleWarmup}
+              disabled={warmup.state === 'running' || endpoints.length === 0}
+              title="Fire one request to every endpoint so Micrometer populates real metrics"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border ${
+                warmup.state === 'running'
+                  ? 'border-amber-500/40 text-amber-400 bg-amber-500/10 cursor-not-allowed'
+                  : warmup.state === 'done'
+                  ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                  : 'border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:border-violet-400'
+              }`}
+            >
+              {warmup.state === 'running' ? (
+                <>
+                  <Loader2 size={11} className="animate-spin" />
+                  {warmup.done}/{warmup.total}
+                </>
+              ) : warmup.state === 'done' ? (
+                <>
+                  <CheckCircle2 size={11} />
+                  Done ({warmup.ok} hit)
+                </>
+              ) : (
+                <>
+                  <Zap size={11} />
+                  Warm Up Metrics
+                </>
+              )}
+            </button>
           </div>
         </div>
 

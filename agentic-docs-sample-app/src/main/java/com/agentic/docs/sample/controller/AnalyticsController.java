@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Reporting & Analytics API — dashboards, KPIs, exports, and scheduled reports.
+ * Reporting &amp; Analytics API — dashboards, KPIs, exports, and scheduled reports.
  */
 @RestController
 @RequestMapping("/api/v1/analytics")

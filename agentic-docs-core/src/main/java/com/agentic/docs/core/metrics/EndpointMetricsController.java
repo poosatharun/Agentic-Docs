@@ -20,7 +20,7 @@ import java.util.Map;
  * Only registered when {@code MetricsEndpoint} is on the classpath
  * (i.e. {@code spring-boot-starter-actuator} is a dependency of the host app).
  *
- * GET /agentic-docs/api/endpoint-metrics?uri=/api/v1/users&method=GET
+ * GET /agentic-docs/api/endpoint-metrics?uri=/api/v1/users&amp;method=GET
  *
  * Response:
  * {

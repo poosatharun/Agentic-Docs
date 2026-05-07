@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Demo Payments & Subscriptions API.
+ * Demo Payments &amp; Subscriptions API.
  * All endpoints are indexed by Agentic Docs and available for RAG queries.
  */
 @RestController

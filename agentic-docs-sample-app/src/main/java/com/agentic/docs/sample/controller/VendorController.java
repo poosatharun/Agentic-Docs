@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Vendor & Supplier Management API — onboarding, purchase orders, contracts, and performance.
+ * Vendor &amp; Supplier Management API — onboarding, purchase orders, contracts, and performance.
  */
 @RestController
 @RequestMapping("/api/v1/vendors")

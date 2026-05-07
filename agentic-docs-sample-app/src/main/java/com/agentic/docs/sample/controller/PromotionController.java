@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Promotions & Coupons API — discount campaigns, coupon codes, flash sales, and loyalty rewards.
+ * Promotions &amp; Coupons API — discount campaigns, coupon codes, flash sales, and loyalty rewards.
  */
 @RestController
 @RequestMapping("/api/v1/promotions")

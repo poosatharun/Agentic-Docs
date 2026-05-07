@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Authentication & Authorization API — login, token refresh, OAuth, MFA, and API keys.
+ * Authentication &amp; Authorization API — login, token refresh, OAuth, MFA, and API keys.
  */
 @RestController
 @RequestMapping("/api/v1/auth")

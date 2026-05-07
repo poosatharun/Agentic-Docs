@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Shipping & Logistics API — carriers, shipments, rates, labels, and delivery tracking.
+ * Shipping &amp; Logistics API — carriers, shipments, rates, labels, and delivery tracking.
  */
 @RestController
 @RequestMapping("/api/v1/shipping")

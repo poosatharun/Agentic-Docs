@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Inventory & Warehouse API — warehouse management, stock levels, transfers, and alerts.
+ * Inventory &amp; Warehouse API — warehouse management, stock levels, transfers, and alerts.
  */
 @RestController
 @RequestMapping("/api/v1/inventory")

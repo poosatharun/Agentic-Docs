@@ -2,6 +2,7 @@
 import Sidebar     from './components/Header'
 import ApiExplorer from './components/ApiExplorer'
 import AiChat      from './components/AiChat'
+import FlowTracer  from './components/FlowTracer'
 
 export default function App() {
   const [tab,             setTab]             = useState('explorer')
@@ -24,6 +25,8 @@ export default function App() {
       <main className="flex flex-col flex-1 overflow-hidden">
         {tab === 'explorer'
           ? <ApiExplorer onAskAI={handleAskAI} />
+          : tab === 'flow'
+          ? <FlowTracer />
           : <AiChat
               key={resetKey}
               pendingQuestion={pendingQuestion}

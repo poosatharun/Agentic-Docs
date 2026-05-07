@@ -1,12 +1,13 @@
-import { Zap, BookOpen, Bot, RotateCcw, Github, Activity } from 'lucide-react'
+import { Zap, BookOpen, Bot, RotateCcw, Github, Activity, Workflow } from 'lucide-react'
 
 /**
  * Left sidebar navigation — contains branding, tab nav links, and footer status.
  */
 export default function Sidebar({ tab, onTab, onReset }) {
   const navItems = [
-    { id: 'explorer', icon: BookOpen, label: 'API Explorer', desc: 'Browse endpoints' },
-    { id: 'chat',     icon: Bot,      label: 'AI Chat',      desc: 'Ask questions'   },
+    { id: 'explorer', icon: BookOpen, label: 'API Explorer', desc: 'Browse endpoints'       },
+    { id: 'chat',     icon: Bot,      label: 'AI Chat',      desc: 'Ask questions'          },
+    { id: 'flow',     icon: Workflow, label: 'Flow Tracer',  desc: 'Live execution trace'   },
   ]
 
   return (

@@ -49,6 +49,7 @@
 
     <modules>
         <module>agentic-docs-core</module>
+        <module>agentic-docs-flow</module>
         <module>agentic-docs-spring-boot-starter</module>
         <module>agentic-docs-sample-app</module>
     </modules>

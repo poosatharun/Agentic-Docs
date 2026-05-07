@@ -1,0 +1,266 @@
+import { useState, useMemo } from 'react'
+import {
+  Workflow, Play, RotateCcw, AlertCircle,
+  CheckCircle2, XCircle, Loader2, Copy, Check,
+  ChevronDown, Layers,
+} from 'lucide-react'
+import FlowStepCard    from './FlowStepCard'
+import MethodBadge     from './MethodBadge'
+import { useEndpoints }   from '../hooks/useEndpoints'
+import { useFlowTracer }  from '../hooks/useFlowTracer'
+import { BODY_METHODS }   from '../api/tryItApi'
+
+/** Copy-to-clipboard button for the final response panel. */
+function CopyBtn({ text }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button onClick={copy} className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-white px-2 py-0.5 rounded hover:bg-white/10 transition-colors">
+      {copied ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+      {copied ? 'Copied' : 'Copy'}
+    </button>
+  )
+}
+
+/**
+ * Flow Tracer page — pick an endpoint, fill inputs, click Send.
+ * Watch the execution diagram light up in real-time as each Spring method fires.
+ */
+export default function FlowTracer() {
+  const { endpoints, loading: epLoading } = useEndpoints()
+  const { steps, status, finalResponse, errorMessage, send, reset } = useFlowTracer()
+
+  // Selected endpoint
+  const [selectedPath,   setSelectedPath]   = useState('')
+  const [selectedMethod, setSelectedMethod] = useState('')
+  const [pathParams,     setPathParams]      = useState({})
+  const [body,           setBody]            = useState('')
+
+  // Derive the selected endpoint object
+  const selectedEndpoint = useMemo(
+    () => endpoints.find((e) => e.path === selectedPath && e.httpMethod === selectedMethod),
+    [endpoints, selectedPath, selectedMethod],
+  )
+
+  // Extract path-param names from the selected path
+  const paramNames = useMemo(
+    () => [...(selectedPath.matchAll(/\{(\w+)\}/g))].map((m) => m[1]),
+    [selectedPath],
+  )
+
+  const needsBody = BODY_METHODS.has(selectedMethod)
+
+  const handleSelect = (e) => {
+    const [method, ...pathParts] = e.target.value.split('|')
+    const path = pathParts.join('|')
+    setSelectedMethod(method)
+    setSelectedPath(path)
+    setPathParams({})
+    setBody('')
+  }
+
+  const handleSend = () => {
+    if (!selectedPath || !selectedMethod) return
+    send({
+      httpMethod: selectedMethod,
+      path:       selectedPath,
+      pathParams,
+      body:       needsBody ? body : null,
+    })
+  }
+
+  const isRunning = status === 'running'
+
+  // Status badge for final response
+  const statusBadge = finalResponse
+    ? finalResponse.ok
+      ? { cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', icon: <CheckCircle2 size={12} /> }
+      : { cls: 'text-red-400 bg-red-500/10 border-red-500/30',             icon: <XCircle size={12} /> }
+    : null
+
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden bg-[#0f1117]">
+      {/* Page header */}
+      <div className="shrink-0 flex items-center gap-3 px-6 py-4 border-b border-white/5 bg-[#13151f]/60 backdrop-blur-sm">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/20">
+          <Workflow size={15} className="text-violet-400" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-sm font-semibold text-white">Flow Tracer</h2>
+          <p className="text-[11px] text-slate-500">Real-time execution diagram — watch every method fire</p>
+        </div>
+        {(status === 'done' || status === 'error') && (
+          <button
+            onClick={reset}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+          >
+            <RotateCcw size={11} /> Reset
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col flex-1 overflow-y-auto scrollbar-thin px-6 py-6 gap-6 max-w-3xl mx-auto w-full">
+
+        {/* ── Input panel ──────────────────────────────────────────────────── */}
+        <div className="rounded-xl border border-white/8 bg-[#13151f] overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0f1117]">
+            <Layers size={12} className="text-violet-400" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Request</span>
+          </div>
+
+          <div className="p-4 flex flex-col gap-4">
+            {/* Endpoint selector */}
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Endpoint</p>
+              <div className="relative">
+                <select
+                  value={selectedPath ? `${selectedMethod}|${selectedPath}` : ''}
+                  onChange={handleSelect}
+                  disabled={epLoading || isRunning}
+                  className="w-full appearance-none bg-[#1a1d2e] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-violet-500/60 transition-colors pr-8 disabled:opacity-50"
+                >
+                  <option value="" disabled>
+                    {epLoading ? 'Loading endpoints…' : 'Select an endpoint…'}
+                  </option>
+                  {Object.entries(
+                    endpoints.reduce((acc, ep) => {
+                      const key = ep.controllerName || 'Other'
+                      if (!acc[key]) acc[key] = []
+                      acc[key].push(ep)
+                      return acc
+                    }, {})
+                  ).map(([controller, eps]) => (
+                    <optgroup key={controller} label={controller}>
+                      {eps.map((ep) => (
+                        <option key={`${ep.httpMethod}|${ep.path}`} value={`${ep.httpMethod}|${ep.path}`}>
+                          [{ep.httpMethod}] {ep.path}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              </div>
+
+              {/* Show method badge + description */}
+              {selectedEndpoint && (
+                <div className="mt-2 flex items-center gap-2">
+                  <MethodBadge method={selectedEndpoint.httpMethod} />
+                  <span className="text-[11px] text-slate-500 truncate">{selectedEndpoint.description}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Path parameters */}
+            {paramNames.length > 0 && (
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Path Parameters</p>
+                <div className="flex flex-wrap gap-3">
+                  {paramNames.map((p) => (
+                    <div key={p} className="flex items-center gap-2">
+                      <label className="text-slate-400 text-xs font-mono">{`{${p}}`}</label>
+                      <input
+                        value={pathParams[p] || ''}
+                        onChange={(e) => setPathParams((prev) => ({ ...prev, [p]: e.target.value }))}
+                        placeholder={p}
+                        disabled={isRunning}
+                        className="bg-[#1a1d2e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-violet-500/60 w-32 transition-colors disabled:opacity-50"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Request body */}
+            {needsBody && (
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Request Body (JSON)</p>
+                <textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows={4}
+                  disabled={isRunning}
+                  placeholder={'{\n  \n}'}
+                  className="w-full bg-[#080a10] border border-white/8 rounded-lg px-3 py-2.5 text-xs text-emerald-300 font-mono focus:outline-none focus:border-violet-500/50 resize-y transition-colors disabled:opacity-50"
+                />
+              </div>
+            )}
+
+            {/* Send button */}
+            <button
+              onClick={handleSend}
+              disabled={!selectedPath || isRunning}
+              className="self-start flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs rounded-xl font-semibold transition-all shadow-sm shadow-violet-900/40"
+            >
+              {isRunning
+                ? <><Loader2 size={12} className="animate-spin" /> Tracing…</>
+                : <><Play size={12} /> Send &amp; Trace</>
+              }
+            </button>
+          </div>
+        </div>
+
+        {/* ── Live execution diagram ────────────────────────────────────────── */}
+        {(steps.length > 0 || isRunning) && (
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-4 rounded-full bg-gradient-to-b from-violet-500 to-purple-700" />
+              <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Execution Flow</h3>
+              <span className="text-[10px] text-slate-600 font-mono">{steps.length} step{steps.length !== 1 ? 's' : ''}</span>
+              {isRunning && <Loader2 size={11} className="text-violet-400 animate-spin ml-1" />}
+            </div>
+
+            <div className="flex flex-col items-stretch">
+              {[...steps].sort((a, b) => a.stepIndex - b.stepIndex).map((step, i, arr) => (
+                <FlowStepCard key={`${step.traceId}-${step.stepIndex}`} step={step} isLast={i === arr.length - 1 && !isRunning} />
+              ))}
+
+              {/* Live pulse while running after last card */}
+              {isRunning && (
+                <div className="flex flex-col items-center py-2">
+                  <div className="w-px h-5 border-l-2 border-dashed border-violet-500/30" />
+                  <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Error state ───────────────────────────────────────────────────── */}
+        {status === 'error' && (
+          <div className="rounded-xl border border-red-500/30 bg-[#1a0d0d] p-4 flex items-start gap-3">
+            <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-300">Execution failed</p>
+              <p className="text-xs text-red-400/80 mt-1">{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Final response card ───────────────────────────────────────────── */}
+        {finalResponse && (
+          <div className="rounded-xl border border-white/8 bg-[#13151f] overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/6 bg-[#0f1117]">
+              <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold ${statusBadge.cls}`}>
+                {statusBadge.icon}
+                HTTP {finalResponse.httpStatus}
+              </span>
+              <span className="text-[10px] text-slate-600 font-mono">{finalResponse.totalMs}ms total · {finalResponse.stepCount} method{finalResponse.stepCount !== 1 ? 's' : ''} traced</span>
+              <div className="ml-auto">
+                <CopyBtn text={finalResponse.responseBody} />
+              </div>
+            </div>
+            <pre className="bg-[#080a10] px-4 py-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-72 overflow-y-auto leading-relaxed">
+              {finalResponse.responseBody || '(empty body)'}
+            </pre>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
