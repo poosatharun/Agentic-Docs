@@ -39,7 +39,7 @@ function JsonPanel({ label, value, accent }) {
           <span className="text-[10px] text-slate-600 font-mono">json</span>
           <CopyBtn text={value} />
         </div>
-        <pre className="bg-[#0a0c14] px-3 py-2.5 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto leading-relaxed">
+        <pre className="bg-[#0a0c14] px-3 py-2.5 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed">
           {value}
         </pre>
       </div>
@@ -90,7 +90,7 @@ export default function FlowStepCard({ step, isLast }) {
           </span>
 
           {/* Class.method() */}
-          <code className="flex-1 text-xs font-mono text-slate-200 truncate">
+          <code className="flex-1 text-xs font-mono text-slate-200 break-all min-w-0">
             {step.className}<span className="text-slate-500">.</span>{step.methodName}<span className="text-slate-500">()</span>
           </code>
 
@@ -136,7 +136,7 @@ export default function FlowStepCard({ step, isLast }) {
             {isError ? (
               <div className="mt-3">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-red-400 mb-1">Error</p>
-                <pre className="bg-[#0f0808] border border-red-500/20 rounded-lg px-3 py-2.5 text-[11px] font-mono text-red-300 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+                <pre className="bg-[#0f0808] border border-red-500/20 rounded-lg px-3 py-2.5 text-[11px] font-mono text-red-300 overflow-x-auto whitespace-pre-wrap max-h-72 overflow-y-auto leading-relaxed">
                   {step.errorMessage}
                 </pre>
               </div>

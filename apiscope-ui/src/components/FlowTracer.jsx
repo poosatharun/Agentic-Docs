@@ -108,9 +108,9 @@ export default function FlowTracer() {
     : null
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden bg-[#0f1117]">
+    <div className="flex flex-col h-full overflow-hidden bg-[#0f1117]">
       {/* Page header */}
-      <div className="shrink-0 flex items-center gap-3 px-6 py-4 border-b border-white/5 bg-[#13151f]/60 backdrop-blur-sm">
+      <div className="shrink-0 flex items-center gap-3 px-6 py-4 border-b border-white/5 bg-[#13151f]/60 backdrop-blur-sm z-10">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/20">
           <Workflow size={15} className="text-violet-400" />
         </div>
@@ -128,7 +128,7 @@ export default function FlowTracer() {
         )}
       </div>
 
-      <div className="flex flex-col flex-1 overflow-y-auto scrollbar-thin px-6 py-6 gap-6 max-w-3xl mx-auto w-full">
+      <div className="flex flex-col flex-1 min-h-0 overflow-y-auto scrollbar-thin px-6 pt-6 pb-16 gap-6 max-w-5xl mx-auto w-full">
 
         <div className="rounded-xl border border-white/8 bg-[#13151f] overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0f1117]">
@@ -347,7 +347,7 @@ export default function FlowTracer() {
                 <CopyBtn text={finalResponse.responseBody} />
               </div>
             </div>
-            <pre className="bg-[#080a10] px-4 py-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-72 overflow-y-auto leading-relaxed">
+            <pre className="bg-[#080a10] px-4 py-3 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-[60vh] overflow-y-auto leading-relaxed">
               {finalResponse.responseBody || '(empty body)'}
             </pre>
           </div>
