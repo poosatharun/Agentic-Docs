@@ -3,12 +3,14 @@ package com.apiscope.flow.url;
 import com.apiscope.flow.model.FlowRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
 
 /**
  * Builds the full target URL from a {@link FlowRequest}, substituting any
- * path-parameter tokens. Extracted from {@code FlowExecutorService} (SRP).
+ * path-parameter tokens and appending query parameters.
+ * Extracted from {@code FlowExecutorService} (SRP).
  */
 @Component
 public class FlowUrlBuilder {
@@ -20,11 +22,11 @@ public class FlowUrlBuilder {
     }
 
     /**
-     * Resolve all {@code {param}} tokens in the request path and prepend the
-     * local base URL.
+     * Resolve all {@code {param}} tokens in the request path, prepend the
+     * local base URL, and append any query parameters.
      *
      * @param request the incoming flow request
-     * @return a fully-qualified URL such as {@code http://localhost:8080/api/v1/checkout}
+     * @return a fully-qualified URL such as {@code http://localhost:8080/api/v1/analytics/revenue?fromDate=2026-01-01&toDate=2026-04-30}
      */
     public String build(FlowRequest request) {
         String path = request.path();
@@ -39,6 +41,17 @@ public class FlowUrlBuilder {
             }
         }
 
-        return "http://localhost:" + serverPort + path;
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                .fromHttpUrl("http://localhost:" + serverPort + path);
+
+        if (request.queryParams() != null) {
+            request.queryParams().forEach((key, value) -> {
+                if (value != null && !value.isBlank()) {
+                    uriBuilder.queryParam(key, value);
+                }
+            });
+        }
+
+        return uriBuilder.toUriString();
     }
 }

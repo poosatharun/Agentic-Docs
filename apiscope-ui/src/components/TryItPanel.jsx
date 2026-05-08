@@ -1,16 +1,29 @@
+import { useState } from 'react'
 import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useTryIt }    from '../hooks/useTryIt'
 import { BODY_METHODS } from '../api/tryItApi'
 
 export default function TryItPanel({ endpoint }) {
-  const { body, setBody, pathParams, setPathParam, response, loading, execute } = useTryIt(endpoint)
+  const { body, setBody, pathParams, setPathParam, queryParams, setQueryParam, response, loading, execute } = useTryIt(endpoint)
+  const [showOptional, setShowOptional] = useState(false)
 
-  const paramNames = [...(endpoint.path.matchAll(/\{(\w+)\}/g))].map((m) => m[1])
+  const paramNames         = [...(endpoint.path.matchAll(/\{(\w+)\}/g))].map((m) => m[1])
+  const requiredParams     = endpoint.requiredQueryParams  ?? []
+  const optionalParams     = endpoint.optionalQueryParams ?? []
+  const allQueryParamNames = [...requiredParams, ...optionalParams]
 
-  const previewUrl = paramNames.reduce(
-    (url, p) => url.replace(`{${p}}`, pathParams[p] || p),
-    endpoint.path,
-  )
+  const previewUrl = (() => {
+    let url = paramNames.reduce(
+      (u, p) => u.replace(`{${p}}`, pathParams[p] || `{${p}}`),
+      endpoint.path,
+    )
+    const qs = new URLSearchParams(
+      allQueryParamNames
+        .filter((p) => queryParams[p])
+        .map((p) => [p, queryParams[p]])
+    ).toString()
+    return qs ? `${url}?${qs}` : url
+  })()
 
   const isOk = response?.ok
 
@@ -23,7 +36,7 @@ export default function TryItPanel({ endpoint }) {
           <div className="flex flex-wrap gap-3">
             {paramNames.map((p) => (
               <div key={p} className="flex items-center gap-2">
-                <label className="text-slate-400 text-xs font-mono">{p}</label>
+                <label className="text-slate-400 text-xs font-mono">{`{${p}}`}</label>
                 <input
                   value={pathParams[p] || ''}
                   onChange={(e) => setPathParam(p, e.target.value)}
@@ -33,6 +46,59 @@ export default function TryItPanel({ endpoint }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Required query parameters — shown as inputs */}
+      {requiredParams.length > 0 && (
+        <div className="bg-[#0f1117] px-4 py-3 border-b border-white/8">
+          <p className="text-[10px] text-slate-600 font-semibold uppercase tracking-widest mb-2">
+            Query Parameters <span className="text-red-400 ml-1">* required</span>
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {requiredParams.map((p) => (
+              <div key={p} className="flex items-center gap-2">
+                <label className="text-slate-400 text-xs font-mono">?{p}</label>
+                <input
+                  value={queryParams[p] || ''}
+                  onChange={(e) => setQueryParam(p, e.target.value)}
+                  placeholder={p}
+                  className="bg-[#1a1d2e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-sky-500/60 w-36 transition-colors"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Optional query parameters — collapsed by default */}
+      {optionalParams.length > 0 && (
+        <div className="bg-[#0f1117] px-4 py-3 border-b border-white/8">
+          <button
+            onClick={() => setShowOptional((v) => !v)}
+            className="flex items-center gap-2 text-[10px] text-slate-600 font-semibold uppercase tracking-widest hover:text-slate-400 transition-colors"
+          >
+            <span>{showOptional ? '▾' : '▸'}</span>
+            Optional Parameters
+            <span className="text-slate-700 normal-case tracking-normal font-normal">
+              ({optionalParams.join(', ')})
+            </span>
+          </button>
+          {showOptional && (
+            <div className="flex flex-wrap gap-3 mt-2">
+              {optionalParams.map((p) => (
+                <div key={p} className="flex items-center gap-2">
+                  <label className="text-slate-500 text-xs font-mono">?{p}</label>
+                  <input
+                    value={queryParams[p] || ''}
+                    onChange={(e) => setQueryParam(p, e.target.value)}
+                    placeholder={`${p} (optional)`}
+                    className="bg-[#1a1d2e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-400 font-mono focus:outline-none focus:border-sky-500/40 w-40 transition-colors"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -7,19 +7,28 @@ export const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH'])
  * Executes a live HTTP request against the target API endpoint.
  *
  * @param {{
- *   path:       string,
- *   httpMethod: string,
- *   pathParams: Record<string, string>,
- *   body:       string,
+ *   path:        string,
+ *   httpMethod:  string,
+ *   pathParams:  Record<string, string>,
+ *   queryParams: Record<string, string>,
+ *   body:        string,
  * }} params
  * @returns {Promise<{ status: number, ok: boolean, body: string }>}
  */
-export async function executeTryIt({ path, httpMethod, pathParams, body }) {
+export async function executeTryIt({ path, httpMethod, pathParams, queryParams, body }) {
   // Substitute path parameters into the URL template
-  const url = Object.entries(pathParams).reduce(
+  let url = Object.entries(pathParams).reduce(
     (acc, [key, value]) => acc.replace(`{${key}}`, value || key),
     path,
   )
+
+  // Append query parameters
+  if (queryParams && Object.keys(queryParams).length > 0) {
+    const qs = new URLSearchParams(
+      Object.entries(queryParams).filter(([, v]) => v !== '' && v != null)
+    ).toString()
+    if (qs) url = `${url}?${qs}`
+  }
 
   const options = { method: httpMethod }
 

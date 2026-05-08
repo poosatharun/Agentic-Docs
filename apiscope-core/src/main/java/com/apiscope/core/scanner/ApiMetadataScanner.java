@@ -34,7 +34,8 @@ public class ApiMetadataScanner implements EndpointRepository {
 
     private static final List<String> INTERNAL_PACKAGE_PREFIXES = List.of(
             "com.apiscope.core",
-            "com.apiscope.autoconfigure"
+            "com.apiscope.autoconfigure",
+            "com.apiscope.flow"
     );
 
     private final RequestMappingHandlerMapping handlerMapping;
@@ -79,7 +80,8 @@ public class ApiMetadataScanner implements EndpointRepository {
                 method.getName(),
                 extractDescription(method),
                 extractAnnotatedParams(hm, PathVariable.class),
-                extractAnnotatedParams(hm, RequestParam.class),
+                extractRequiredQueryParams(hm),
+                extractOptionalQueryParams(hm),
                 extractRequestBodyType(hm),
                 extractResponseType(hm)
         );
@@ -114,15 +116,66 @@ public class ApiMetadataScanner implements EndpointRepository {
                 .toList();
     }
 
+    /** Required @RequestParam: required=true AND no defaultValue set. */
+    private List<String> extractRequiredQueryParams(HandlerMethod hm) {
+        return Arrays.stream(hm.getMethodParameters())
+                .filter(mp -> mp.hasParameterAnnotation(RequestParam.class))
+                .filter(mp -> isRequiredRequestParam(mp))
+                .map(mp -> resolveParamName(mp, RequestParam.class))
+                .toList();
+    }
+
+    /** Optional @RequestParam: required=false OR has a defaultValue. */
+    private List<String> extractOptionalQueryParams(HandlerMethod hm) {
+        return Arrays.stream(hm.getMethodParameters())
+                .filter(mp -> mp.hasParameterAnnotation(RequestParam.class))
+                .filter(mp -> !isRequiredRequestParam(mp))
+                .map(mp -> resolveParamName(mp, RequestParam.class))
+                .toList();
+    }
+
+    private boolean isRequiredRequestParam(MethodParameter mp) {
+        RequestParam ann = mp.getParameterAnnotation(RequestParam.class);
+        if (ann == null) return false;
+        // Has a non-sentinel defaultValue → optional
+        String def = ann.defaultValue();
+        boolean hasDefault = !def.equals(org.springframework.web.bind.annotation.ValueConstants.DEFAULT_NONE);
+        return ann.required() && !hasDefault;
+    }
+
     @SuppressWarnings("unchecked")
     private <A extends java.lang.annotation.Annotation> String resolveParamName(MethodParameter mp, Class<A> type) {
         A ann = mp.getParameterAnnotation(type);
+
+        // 1. Explicit value() on the annotation, e.g. @RequestParam("fromDate")
         try {
             String value = (String) type.getMethod("value").invoke(ann);
             if (value != null && !value.isBlank()) return value;
         } catch (Exception ignored) {}
-        String name = mp.getParameterName();
-        return name != null ? name : "param" + mp.getParameterIndex();
+
+        // 2. Explicit name() alias, e.g. @RequestParam(name = "fromDate")
+        try {
+            String name = (String) type.getMethod("name").invoke(ann);
+            if (name != null && !name.isBlank()) return name;
+        } catch (Exception ignored) {}
+
+        // 3. Java reflect Parameter.getName() — works when compiled with -parameters
+        //    (already set in parent pom: <parameters>true</parameters>)
+        java.lang.reflect.Parameter[] params = mp.getMethod() != null
+                ? mp.getMethod().getParameters()
+                : new java.lang.reflect.Parameter[0];
+        int idx = mp.getParameterIndex();
+        if (idx >= 0 && idx < params.length) {
+            String reflectName = params[idx].getName();
+            if (reflectName != null && !reflectName.isBlank() && !reflectName.startsWith("arg")) {
+                return reflectName;
+            }
+        }
+
+        // 4. Spring's own ParameterNameDiscoverer (fallback)
+        mp.initParameterNameDiscovery(new org.springframework.core.DefaultParameterNameDiscoverer());
+        String discovered = mp.getParameterName();
+        return discovered != null ? discovered : "param" + mp.getParameterIndex();
     }
 
     private String extractRequestBodyType(HandlerMethod handlerMethod) {

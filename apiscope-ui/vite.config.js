@@ -29,6 +29,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // Forward sample-app endpoint calls (tryItApi, warmupApi) to Spring Boot
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -40,11 +40,14 @@ public class FlowExecutorService {
     private final TraceEventSink sink;
     private final FlowUrlBuilder urlBuilder;
     private final RestClient     restClient;
+    private final com.apiscope.flow.aspect.FlowAspect flowAspect;
 
-    public FlowExecutorService(TraceEventSink sink, FlowUrlBuilder urlBuilder, RestClient restClient) {
-        this.sink       = sink;
-        this.urlBuilder = urlBuilder;
-        this.restClient = restClient;
+    public FlowExecutorService(TraceEventSink sink, FlowUrlBuilder urlBuilder, RestClient restClient,
+                               com.apiscope.flow.aspect.FlowAspect flowAspect) {
+        this.sink        = sink;
+        this.urlBuilder  = urlBuilder;
+        this.restClient  = restClient;
+        this.flowAspect  = flowAspect;
     }
 
     /**
@@ -89,7 +92,8 @@ public class FlowExecutorService {
                         .toEntity(String.class);
             }
 
-            long totalMs = System.currentTimeMillis() - start;
+            long totalMs  = System.currentTimeMillis() - start;
+            int  stepCount = flowAspect.getAndClearStepCount(traceId);
 
             sink.pushDone(traceId, new FlowDoneEvent(
                     traceId,
@@ -97,7 +101,7 @@ public class FlowExecutorService {
                     response.getBody() != null ? response.getBody() : "",
                     totalMs,
                     response.getStatusCode().is2xxSuccessful(),
-                    0
+                    stepCount
             ));
 
         } catch (Exception ex) {

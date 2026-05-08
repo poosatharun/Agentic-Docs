@@ -34,6 +34,7 @@ export default function FlowTracer() {
   const [selectedPath,   setSelectedPath]   = useState('')
   const [selectedMethod, setSelectedMethod] = useState('')
   const [pathParams,     setPathParams]      = useState({})
+  const [queryParams,    setQueryParams]     = useState({})
   const [body,           setBody]            = useState('')
   const [endpointSearch, setEndpointSearch] = useState('')
 
@@ -69,16 +70,18 @@ export default function FlowTracer() {
     setSelectedMethod(method)
     setSelectedPath(path)
     setPathParams({})
+    setQueryParams({})
     setBody('')
   }
 
   const handleSend = () => {
     if (!selectedPath || !selectedMethod) return
     send({
-      httpMethod: selectedMethod,
-      path:       selectedPath,
+      httpMethod:  selectedMethod,
+      path:        selectedPath,
       pathParams,
-      body:       needsBody ? body : null,
+      queryParams,
+      body:        needsBody ? body : null,
     })
   }
 
@@ -212,6 +215,27 @@ export default function FlowTracer() {
                         placeholder={p}
                         disabled={isRunning}
                         className="bg-[#1a1d2e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-violet-500/60 w-32 transition-colors disabled:opacity-50"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Query parameters */}
+            {(selectedEndpoint?.requiredQueryParams?.length ?? 0) > 0 && (
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Query Parameters</p>
+                <div className="flex flex-wrap gap-3">
+                  {selectedEndpoint.requiredQueryParams.map((p) => (
+                    <div key={p} className="flex items-center gap-2">
+                      <label className="text-slate-400 text-xs font-mono">?{p}</label>
+                      <input
+                        value={queryParams[p] || ''}
+                        onChange={(e) => setQueryParams((prev) => ({ ...prev, [p]: e.target.value }))}
+                        placeholder={p}
+                        disabled={isRunning}
+                        className="bg-[#1a1d2e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-sky-500/60 w-36 transition-colors disabled:opacity-50"
                       />
                     </div>
                   ))}

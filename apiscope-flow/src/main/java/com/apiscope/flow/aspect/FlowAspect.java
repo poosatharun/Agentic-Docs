@@ -132,5 +132,16 @@ public class FlowAspect {
         return stepCounters.computeIfAbsent(traceId, id -> new AtomicInteger(0))
                            .getAndIncrement();
     }
+
+    /**
+     * Returns the total number of steps recorded for the given trace and removes
+     * the counter entry from the map (prevents unbounded memory growth).
+     * Called by {@link com.apiscope.flow.executor.FlowExecutorService} just before
+     * pushing the {@code done} event.
+     */
+    public int getAndClearStepCount(String traceId) {
+        AtomicInteger counter = stepCounters.remove(traceId);
+        return counter != null ? counter.get() : 0;
+    }
 }
 

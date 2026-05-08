@@ -13,7 +13,8 @@ public record ApiEndpointMetadata(
         String methodName,
         String description,
         List<String> pathParams,
-        List<String> queryParams,
+        List<String> requiredQueryParams,
+        List<String> optionalQueryParams,
         String requestBodyType,
         String responseType
 ) {
@@ -22,18 +23,20 @@ public record ApiEndpointMetadata(
      */
     public String toLlmReadableText() {
         return """
-                Endpoint      : [%s] %s
-                Controller    : %s
-                Method        : %s
-                Path Params   : %s
-                Query Params  : %s
-                Request Body  : %s
-                Response Type : %s
-                Summary       : %s
+                Endpoint         : [%s] %s
+                Controller       : %s
+                Method           : %s
+                Path Params      : %s
+                Required Params  : %s
+                Optional Params  : %s
+                Request Body     : %s
+                Response Type    : %s
+                Summary          : %s
                 """.formatted(
                 httpMethod, path, controllerName, methodName,
                 pathParams == null || pathParams.isEmpty() ? "none" : String.join(", ", pathParams),
-                queryParams == null || queryParams.isEmpty() ? "none" : String.join(", ", queryParams),
+                requiredQueryParams == null || requiredQueryParams.isEmpty() ? "none" : String.join(", ", requiredQueryParams),
+                optionalQueryParams == null || optionalQueryParams.isEmpty() ? "none" : String.join(", ", optionalQueryParams),
                 requestBodyType != null ? requestBodyType : "none",
                 responseType != null ? responseType : "void",
                 description);

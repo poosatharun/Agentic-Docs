@@ -8,25 +8,32 @@ import { executeTryIt } from '../api/tryItApi'
  * handles rendering. The actual fetch is delegated to {@link executeTryIt}
  * (src/api/tryItApi.js).
  *
- * @param {{ path: string, httpMethod: string }} endpoint
+ * @param {{ path: string, httpMethod: string, requiredQueryParams: string[], optionalQueryParams: string[] }} endpoint
  * @returns {{
- *   body:          string,
- *   setBody:       React.Dispatch<React.SetStateAction<string>>,
- *   pathParams:    Record<string, string>,
- *   setPathParam:  (name: string, value: string) => void,
- *   response:      { status: number, ok: boolean, body: string } | null,
- *   loading:       boolean,
- *   execute:       () => Promise<void>,
+ *   body:           string,
+ *   setBody:        React.Dispatch<React.SetStateAction<string>>,
+ *   pathParams:     Record<string, string>,
+ *   setPathParam:   (name: string, value: string) => void,
+ *   queryParams:    Record<string, string>,
+ *   setQueryParam:  (name: string, value: string) => void,
+ *   response:       { status: number, ok: boolean, body: string } | null,
+ *   loading:        boolean,
+ *   execute:        () => Promise<void>,
  * }}
  */
 export function useTryIt(endpoint) {
-  const [body,       setBody]     = useState('')
-  const [pathParams, setParams]   = useState({})
-  const [response,   setResponse] = useState(null)
-  const [loading,    setLoading]  = useState(false)
+  const [body,        setBody]       = useState('')
+  const [pathParams,  setParams]     = useState({})
+  const [queryParams, setQueryState] = useState({})
+  const [response,    setResponse]   = useState(null)
+  const [loading,     setLoading]    = useState(false)
 
   const setPathParam = useCallback((name, value) => {
     setParams((prev) => ({ ...prev, [name]: value }))
+  }, [])
+
+  const setQueryParam = useCallback((name, value) => {
+    setQueryState((prev) => ({ ...prev, [name]: value }))
   }, [])
 
   const execute = useCallback(async () => {
@@ -36,11 +43,12 @@ export function useTryIt(endpoint) {
       path:       endpoint.path,
       httpMethod: endpoint.httpMethod,
       pathParams,
+      queryParams,
       body,
     })
     setResponse(result)
     setLoading(false)
-  }, [endpoint.path, endpoint.httpMethod, pathParams, body])
+  }, [endpoint.path, endpoint.httpMethod, pathParams, queryParams, body])
 
-  return { body, setBody, pathParams, setPathParam, response, loading, execute }
+  return { body, setBody, pathParams, setPathParam, queryParams, setQueryParam, response, loading, execute }
 }
