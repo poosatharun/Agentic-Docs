@@ -40,7 +40,16 @@ public class AgenticDocsChatController {
     public ResponseEntity<ChatResponse> chat(@Validated @RequestBody ChatRequest request) {
         log.debug("[APIScope] Received chat request.");
         return ResponseEntity.ok(chatPort.answer(request));
-    }    /** Streaming chat via SSE. Events: token, done, error. */
+    }
+
+    /** Friendly message when someone hits GET /chat by mistake (browser, Swagger, etc.). */
+    @GetMapping("/chat")
+    public ResponseEntity<ChatResponse> chatGetFallback() {
+        return ResponseEntity.ok(new ChatResponse(
+                "This endpoint only accepts POST requests. Send a JSON body: {\"question\": \"your question\"}"));
+    }
+
+    /** Streaming chat via SSE. Events: token, done, error. */
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<ServerSentEvent<String>>> chatStream(
             @Validated @RequestBody ChatRequest request) {

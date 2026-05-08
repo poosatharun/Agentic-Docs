@@ -21,11 +21,12 @@ public class LlmAdapter implements LlmPort {
 
     @Override
     public String complete(String systemPromptTemplate, String context, String question) {
-        return chatClient.prompt()
+        String result = chatClient.prompt()
                 .system(s -> s.text(systemPromptTemplate).param("context", context))
                 .user(question)
                 .call()
                 .content();
+        return (result != null) ? result : "";
     }
 
     @Override
@@ -34,6 +35,7 @@ public class LlmAdapter implements LlmPort {
                 .system(s -> s.text(systemPromptTemplate).param("context", context))
                 .user(question)
                 .stream()
-                .content();
+                .content()
+                .filter(token -> token != null && !token.isEmpty());
     }
 }
