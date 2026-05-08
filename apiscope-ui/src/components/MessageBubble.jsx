@@ -20,9 +20,46 @@ function CopyButton({ text }) {
   )
 }
 
-/**
- * Renders a single chat message bubble — either user or assistant.
- */
+function MarkdownCode({ node, children, ...props }) {
+  const isInline = node?.position?.start?.line === node?.position?.end?.line
+    && !String(children).includes('\n')
+  const codeStr = String(children)
+  if (isInline) {
+    return (
+      <code className="bg-[#0f1117] text-violet-300 px-1.5 py-0.5 rounded-md text-xs font-mono border border-white/8" {...props}>
+        {children}
+      </code>
+    )
+  }
+  return (
+    <div className="my-3 rounded-xl overflow-hidden border border-white/8">
+      <div className="flex items-center justify-between bg-[#0f1117] px-3 py-2 border-b border-white/8">
+        <div className="flex items-center gap-2">
+          <Code2 size={11} className="text-slate-500" />
+          <span className="text-slate-500 text-[10px] font-mono uppercase tracking-wider">code</span>
+        </div>
+        <CopyButton text={codeStr} />
+      </div>
+      <pre className="bg-[#080a10] p-4 overflow-x-auto">
+        <code className="text-emerald-300 text-xs font-mono" {...props}>{children}</code>
+      </pre>
+    </div>
+  )
+}
+
+const MD_COMPONENTS = {
+  code: MarkdownCode,
+  p:          ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+  ul:         ({ children }) => <ul className="list-none mb-2 space-y-1.5">{children}</ul>,
+  li:         ({ children }) => <li className="flex items-start gap-2"><span className="text-violet-400 mt-1.5 shrink-0">▸</span><span>{children}</span></li>,
+  ol:         ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+  strong:     ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+  h1:         ({ children }) => <h1 className="text-base font-bold text-white mb-2 mt-3 first:mt-0">{children}</h1>,
+  h2:         ({ children }) => <h2 className="text-sm font-bold text-white mb-2 mt-3 first:mt-0">{children}</h2>,
+  h3:         ({ children }) => <h3 className="text-xs font-bold text-slate-200 mb-1.5 mt-2 first:mt-0">{children}</h3>,
+  blockquote: ({ children }) => <blockquote className="border-l-2 border-violet-500/50 pl-3 text-slate-400 italic my-2">{children}</blockquote>,
+}
+
 export default function MessageBubble({ msg, index }) {
   const isUser = msg.role === 'user'
   const time   = msg.timestamp
@@ -56,46 +93,7 @@ export default function MessageBubble({ msg, index }) {
           {isUser ? (
             <p className="whitespace-pre-wrap">{msg.content}</p>
           ) : (
-            <ReactMarkdown
-              components={{
-                code({ node, children, ...props }) {
-                  const isInline = node?.position?.start?.line === node?.position?.end?.line
-                    && !String(children).includes('\n')
-                  const codeStr = String(children)
-                  return isInline
-                    ? (
-                      <code
-                        className="bg-[#0f1117] text-violet-300 px-1.5 py-0.5 rounded-md text-xs font-mono border border-white/8"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ) : (
-                      <div className="my-3 rounded-xl overflow-hidden border border-white/8">
-                        <div className="flex items-center justify-between bg-[#0f1117] px-3 py-2 border-b border-white/8">
-                          <div className="flex items-center gap-2">
-                            <Code2 size={11} className="text-slate-500" />
-                            <span className="text-slate-500 text-[10px] font-mono uppercase tracking-wider">code</span>
-                          </div>
-                          <CopyButton text={codeStr} />
-                        </div>
-                        <pre className="bg-[#080a10] p-4 overflow-x-auto">
-                          <code className="text-emerald-300 text-xs font-mono" {...props}>{children}</code>
-                        </pre>
-                      </div>
-                    )
-                },
-                p({ children })      { return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p> },
-                ul({ children })     { return <ul className="list-none mb-2 space-y-1.5">{children}</ul> },
-                li({ children })     { return <li className="flex items-start gap-2"><span className="text-violet-400 mt-1.5 shrink-0">▸</span><span>{children}</span></li> },
-                ol({ children })     { return <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol> },
-                strong({ children }) { return <strong className="text-white font-semibold">{children}</strong> },
-                h1({ children })     { return <h1 className="text-base font-bold text-white mb-2 mt-3 first:mt-0">{children}</h1> },
-                h2({ children })     { return <h2 className="text-sm font-bold text-white mb-2 mt-3 first:mt-0">{children}</h2> },
-                h3({ children })     { return <h3 className="text-xs font-bold text-slate-200 mb-1.5 mt-2 first:mt-0">{children}</h3> },
-                blockquote({ children }) { return <blockquote className="border-l-2 border-violet-500/50 pl-3 text-slate-400 italic my-2">{children}</blockquote> },
-              }}
-            >
+            <ReactMarkdown components={MD_COMPONENTS}>
               {msg.content}
             </ReactMarkdown>
           )}

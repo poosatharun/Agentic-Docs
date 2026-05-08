@@ -3,6 +3,7 @@ package com.apiscope.flow.aspect;
 import com.apiscope.flow.model.TraceEvent;
 import com.apiscope.flow.serializer.TraceSerializer;
 import com.apiscope.flow.spi.TraceEventSink;
+import com.apiscope.flow.sql.SqlCapture;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -75,8 +76,9 @@ public class FlowAspect {
         String          methodName = sig.getName();
         String          layer      = resolveLayer(pjp.getTarget());
         int             stepIndex  = nextStep(traceId);
-        String          inputJson  = serializer.serializeArgs(pjp.getArgs());
-        long            start      = System.currentTimeMillis();
+        String inputJson  = serializer.serializeArgs(pjp.getArgs());
+        long   start      = System.currentTimeMillis();
+        SqlCapture.begin();
 
         try {
             Object result     = pjp.proceed();
@@ -84,7 +86,8 @@ public class FlowAspect {
 
             sink.pushStep(traceId, new TraceEvent(
                     traceId, stepIndex, layer, className, methodName,
-                    inputJson, serializer.serializeValue(result), durationMs, "EXIT", null));
+                    inputJson, serializer.serializeValue(result), durationMs, "EXIT", null,
+                    SqlCapture.drain()));
 
             return result;
 
@@ -93,7 +96,8 @@ public class FlowAspect {
 
             sink.pushStep(traceId, new TraceEvent(
                     traceId, stepIndex, layer, className, methodName,
-                    inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(ex)));
+                    inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(ex),
+                    SqlCapture.drain()));
 
             throw ex;
         }

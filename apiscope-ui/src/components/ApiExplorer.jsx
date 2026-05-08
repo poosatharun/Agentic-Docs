@@ -5,9 +5,6 @@ import { methodColor } from '../constants/methodColors'
 import { useEndpoints } from '../hooks/useEndpoints'
 import { warmupAllEndpoints } from '../api/warmupApi'
 
-/**
- * "API Explorer" tab — shows all discovered REST endpoints grouped by controller.
- */
 export default function ApiExplorer({ onAskAI }) {
   const { endpoints, loading, error } = useEndpoints()
   const [search,       setSearch]       = useState('')

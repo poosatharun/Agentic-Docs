@@ -110,7 +110,7 @@ public class AnalyticsController {
 
     @GetMapping("/customers/cohort-retention")
     public ResponseEntity<Map<String, Object>> getCohortRetention(
-            @RequestParam String cohortMonth,
+            @RequestParam(defaultValue = "2026-01") String cohortMonth,
             @RequestParam(defaultValue = "6") int periods) {
         return ResponseEntity.ok(Map.of(
                 "cohortMonth", cohortMonth,

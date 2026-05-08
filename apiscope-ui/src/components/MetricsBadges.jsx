@@ -1,15 +1,6 @@
 import { Zap, CheckCircle, BarChart3 } from 'lucide-react'
 import { useEndpointMetrics } from '../hooks/useEndpointMetrics'
 
-/**
- * Shows live Average Response Time and Success Rate sourced from
- * Micrometer via /apiscope/api/endpoint-metrics.
- *
- * States:
- *  - not ready yet   → subtle loading skeleton
- *  - available: false → subtle "no metrics" hint
- *  - available: true  → coloured badges with real values
- */
 export default function MetricsBadges({ path, method }) {
   const { avgResponseMs, successRate, available, ready } = useEndpointMetrics(path, method)
 

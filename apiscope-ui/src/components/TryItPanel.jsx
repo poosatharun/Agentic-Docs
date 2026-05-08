@@ -2,9 +2,6 @@ import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useTryIt }    from '../hooks/useTryIt'
 import { BODY_METHODS } from '../api/tryItApi'
 
-/**
- * Inline "Try it out" panel rendered inside an expanded EndpointRow.
- */
 export default function TryItPanel({ endpoint }) {
   const { body, setBody, pathParams, setPathParam, response, loading, execute } = useTryIt(endpoint)
 

@@ -1,8 +1,5 @@
 import { Bot } from 'lucide-react'
 
-/**
- * Animated "thinking…" indicator shown while the AI is generating a response.
- */
 export default function TypingIndicator() {
   return (
     <div className="flex gap-3 items-end">
@@ -14,19 +11,11 @@ export default function TypingIndicator() {
           {[0, 200, 400].map((delay) => (
             <span
               key={delay}
-              className="block w-1.5 h-1.5 rounded-full bg-violet-500 opacity-60"
-              style={{
-                animation: `bounce 1.2s ease-in-out ${delay}ms infinite`,
-              }}
+              className="typing-dot block w-1.5 h-1.5 rounded-full bg-violet-500 opacity-60"
+              style={{ animationDelay: `${delay}ms` }}
             />
           ))}
         </div>
-        <style>{`
-          @keyframes bounce {
-            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-            40% { transform: translateY(-5px); opacity: 1; }
-          }
-        `}</style>
       </div>
       <span className="text-[10px] text-slate-700 mb-1 ml-1">Thinking…</span>
     </div>

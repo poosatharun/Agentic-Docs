@@ -1,14 +1,12 @@
-import { RotateCcw, Activity } from 'lucide-react'
+import { RotateCcw, Activity, BookOpen, Bot, Workflow } from 'lucide-react'
 
-/**
- * Left sidebar navigation — contains branding, tab nav links, and footer status.
- */
+const NAV_ITEMS = [
+  { id: 'explorer', label: 'API Explorer', desc: 'Browse endpoints',      icon: BookOpen },
+  { id: 'chat',     label: 'AI Chat',      desc: 'Ask questions',         icon: Bot      },
+  { id: 'flow',     label: 'Flow Tracer',  desc: 'Live execution trace',  icon: Workflow },
+]
+
 export default function Sidebar({ tab, onTab, onReset }) {
-  const navItems = [
-    { id: 'explorer', label: 'API Explorer', desc: 'Browse endpoints'       },
-    { id: 'chat',     label: 'AI Chat',      desc: 'Ask questions'          },
-    { id: 'flow',     label: 'Flow Tracer',  desc: 'Live execution trace'   },
-  ]
 
   return (
     <aside className="flex flex-col w-64 shrink-0 bg-[#13151f] border-r border-white/5 h-full">
@@ -25,7 +23,7 @@ export default function Sidebar({ tab, onTab, onReset }) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         <p className="px-2 mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Navigation</p>
-        {navItems.map(({ id, label, desc }) => {
+        {NAV_ITEMS.map(({ id, label, desc, icon: Icon }) => {
           const active = tab === id
           return (
             <button
@@ -37,12 +35,17 @@ export default function Sidebar({ tab, onTab, onReset }) {
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
-              <div>
+              <div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                active ? 'bg-violet-600/20' : 'bg-white/5 group-hover:bg-white/8'
+              }`}>
+                <Icon size={14} className={active ? 'text-violet-400' : 'text-slate-500 group-hover:text-slate-300'} />
+              </div>
+              <div className="flex-1">
                 <p className={`text-xs font-semibold leading-tight ${active ? 'text-white' : ''}`}>{label}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">{desc}</p>
               </div>
               {active && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />
+                <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
               )}
             </button>
           )

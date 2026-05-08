@@ -3,19 +3,13 @@ import { SUGGESTIONS } from '../constants/suggestions'
 
 const ICONS = [Zap, Code2, BookOpen, Globe, Sparkles, ArrowRight]
 
-/**
- * Empty-state welcome panel shown before the first message is sent.
- */
 export default function SuggestionChips({ onSelect }) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 px-6 py-12">
       {/* Hero */}
       <div className="text-center mb-10">
-        <div className="relative mx-auto mb-6 w-20 h-20">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-violet-500/20 to-purple-700/20 blur-xl" />
-          <div className="relative flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#1a1d2e] to-[#0f1117] border border-violet-500/20 shadow-xl">
-            <Sparkles size={32} className="text-violet-400" />
-          </div>
+        <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-600/15 border border-violet-500/20 mx-auto mb-5">
+          <Sparkles size={28} className="text-violet-400" />
         </div>
         <h2 className="text-white text-2xl font-bold mb-3 tracking-tight">What can I help you with?</h2>
         <p className="text-slate-500 text-sm max-w-md leading-relaxed">

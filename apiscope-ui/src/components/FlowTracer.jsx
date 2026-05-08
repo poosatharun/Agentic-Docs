@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   Workflow, Play, RotateCcw, AlertCircle,
   CheckCircle2, XCircle, Loader2, Copy, Check,
-  ChevronDown, Layers,
+  ChevronDown, Layers, Search,
 } from 'lucide-react'
 import FlowStepCard    from './FlowStepCard'
 import MethodBadge     from './MethodBadge'
@@ -26,10 +26,6 @@ function CopyBtn({ text }) {
   )
 }
 
-/**
- * Flow Tracer page — pick an endpoint, fill inputs, click Send.
- * Watch the execution diagram light up in real-time as each Spring method fires.
- */
 export default function FlowTracer() {
   const { endpoints, loading: epLoading } = useEndpoints()
   const { steps, status, finalResponse, errorMessage, send, reset } = useFlowTracer()
@@ -39,6 +35,7 @@ export default function FlowTracer() {
   const [selectedMethod, setSelectedMethod] = useState('')
   const [pathParams,     setPathParams]      = useState({})
   const [body,           setBody]            = useState('')
+  const [endpointSearch, setEndpointSearch] = useState('')
 
   // Derive the selected endpoint object
   const selectedEndpoint = useMemo(
@@ -51,6 +48,18 @@ export default function FlowTracer() {
     () => [...(selectedPath.matchAll(/\{(\w+)\}/g))].map((m) => m[1]),
     [selectedPath],
   )
+
+  // Filter endpoints by search query
+  const filteredEndpoints = useMemo(() => {
+    const q = endpointSearch.toLowerCase().trim()
+    if (!q) return endpoints
+    return endpoints.filter((e) =>
+      e.path.toLowerCase().includes(q) ||
+      e.httpMethod.toLowerCase().includes(q) ||
+      e.controllerName?.toLowerCase().includes(q) ||
+      e.description?.toLowerCase().includes(q)
+    )
+  }, [endpoints, endpointSearch])
 
   const needsBody = BODY_METHODS.has(selectedMethod)
 
@@ -75,6 +84,19 @@ export default function FlowTracer() {
 
   const isRunning = status === 'running'
 
+  // Search within execution flow steps
+  const [stepSearch, setStepSearch] = useState('')
+  const visibleSteps = useMemo(() => {
+    const sorted = [...steps].sort((a, b) => a.stepIndex - b.stepIndex)
+    const q = stepSearch.toLowerCase().trim()
+    if (!q) return sorted
+    return sorted.filter((s) =>
+      s.className?.toLowerCase().includes(q) ||
+      s.methodName?.toLowerCase().includes(q) ||
+      s.layer?.toLowerCase().includes(q)
+    )
+  }, [steps, stepSearch])
+
   // Status badge for final response
   const statusBadge = finalResponse
     ? finalResponse.ok
@@ -95,7 +117,7 @@ export default function FlowTracer() {
         </div>
         {(status === 'done' || status === 'error') && (
           <button
-            onClick={reset}
+            onClick={() => { reset(); setStepSearch('') }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
           >
             <RotateCcw size={11} /> Reset
@@ -105,7 +127,6 @@ export default function FlowTracer() {
 
       <div className="flex flex-col flex-1 overflow-y-auto scrollbar-thin px-6 py-6 gap-6 max-w-3xl mx-auto w-full">
 
-        {/* ── Input panel ──────────────────────────────────────────────────── */}
         <div className="rounded-xl border border-white/8 bg-[#13151f] overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0f1117]">
             <Layers size={12} className="text-violet-400" />
@@ -116,6 +137,22 @@ export default function FlowTracer() {
             {/* Endpoint selector */}
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Endpoint</p>
+
+              {/* Search */}
+              <div className="flex items-center gap-2 bg-[#1a1d2e] border border-white/10 rounded-xl px-3 py-2 mb-2 focus-within:border-violet-500/50 transition-colors">
+                <Search size={12} className="text-slate-600 shrink-0" />
+                <input
+                  value={endpointSearch}
+                  onChange={(e) => setEndpointSearch(e.target.value)}
+                  placeholder="Filter endpoints…"
+                  disabled={epLoading || isRunning}
+                  className="bg-transparent text-slate-200 text-xs flex-1 outline-none placeholder-slate-600 disabled:opacity-50"
+                />
+                {endpointSearch && (
+                  <button onClick={() => setEndpointSearch('')} className="text-slate-600 hover:text-white text-xs leading-none">×</button>
+                )}
+              </div>
+
               <div className="relative">
                 <select
                   value={selectedPath ? `${selectedMethod}|${selectedPath}` : ''}
@@ -124,10 +161,10 @@ export default function FlowTracer() {
                   className="w-full appearance-none bg-[#1a1d2e] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-violet-500/60 transition-colors pr-8 disabled:opacity-50"
                 >
                   <option value="" disabled>
-                    {epLoading ? 'Loading endpoints…' : 'Select an endpoint…'}
+                    {epLoading ? 'Loading endpoints…' : filteredEndpoints.length === 0 ? 'No matches' : 'Select an endpoint…'}
                   </option>
                   {Object.entries(
-                    endpoints.reduce((acc, ep) => {
+                    filteredEndpoints.reduce((acc, ep) => {
                       const key = ep.controllerName || 'Other'
                       if (!acc[key]) acc[key] = []
                       acc[key].push(ep)
@@ -145,6 +182,12 @@ export default function FlowTracer() {
                 </select>
                 <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               </div>
+
+              {endpointSearch && (
+                <p className="text-[10px] text-slate-600 mt-1.5">
+                  {filteredEndpoints.length} result{filteredEndpoints.length !== 1 ? 's' : ''} for &ldquo;{endpointSearch}&rdquo;
+                </p>
+              )}
 
               {/* Show method badge + description */}
               {selectedEndpoint && (
@@ -205,20 +248,47 @@ export default function FlowTracer() {
           </div>
         </div>
 
-        {/* ── Live execution diagram ────────────────────────────────────────── */}
         {(steps.length > 0 || isRunning) && (
           <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-4 rounded-full bg-gradient-to-b from-violet-500 to-purple-700" />
               <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Execution Flow</h3>
               <span className="text-[10px] text-slate-600 font-mono">{steps.length} step{steps.length !== 1 ? 's' : ''}</span>
               {isRunning && <Loader2 size={11} className="text-violet-400 animate-spin ml-1" />}
             </div>
 
+            {/* Step search */}
+            {steps.length > 1 && (
+              <div className="flex items-center gap-2 bg-[#13151f] border border-white/8 rounded-xl px-3 py-2 mb-4 focus-within:border-violet-500/40 transition-colors">
+                <Search size={12} className="text-slate-600 shrink-0" />
+                <input
+                  value={stepSearch}
+                  onChange={(e) => setStepSearch(e.target.value)}
+                  placeholder="Search steps by class, method, or layer…"
+                  className="bg-transparent text-slate-200 text-xs flex-1 outline-none placeholder-slate-600"
+                />
+                {stepSearch && (
+                  <button onClick={() => setStepSearch('')} className="text-slate-600 hover:text-white text-xs leading-none">×</button>
+                )}
+                {stepSearch && (
+                  <span className="text-[10px] text-slate-600 shrink-0">
+                    {visibleSteps.length}/{steps.length}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col items-stretch">
-              {[...steps].sort((a, b) => a.stepIndex - b.stepIndex).map((step, i, arr) => (
+              {visibleSteps.map((step, i, arr) => (
                 <FlowStepCard key={`${step.traceId}-${step.stepIndex}`} step={step} isLast={i === arr.length - 1 && !isRunning} />
               ))}
+
+              {stepSearch && visibleSteps.length === 0 && (
+                <div className="flex flex-col items-center py-8 text-center">
+                  <Search size={20} className="text-slate-700 mb-2" />
+                  <p className="text-slate-500 text-xs">No steps match &ldquo;{stepSearch}&rdquo;</p>
+                </div>
+              )}
 
               {/* Live pulse while running after last card */}
               {isRunning && (
@@ -231,7 +301,6 @@ export default function FlowTracer() {
           </div>
         )}
 
-        {/* ── Error state ───────────────────────────────────────────────────── */}
         {status === 'error' && (
           <div className="rounded-xl border border-red-500/30 bg-[#1a0d0d] p-4 flex items-start gap-3">
             <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
@@ -242,7 +311,6 @@ export default function FlowTracer() {
           </div>
         )}
 
-        {/* ── Final response card ───────────────────────────────────────────── */}
         {finalResponse && (
           <div className="rounded-xl border border-white/8 bg-[#13151f] overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3 border-b border-white/6 bg-[#0f1117]">

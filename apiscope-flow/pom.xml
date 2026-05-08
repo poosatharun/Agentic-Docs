@@ -59,6 +59,16 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!--
+            Hibernate StatementInspector — used by FlowStatementInspector to capture SQL queries
+            per traced method call. Marked optional so the library remains usable without JPA.
+        -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
 </project>

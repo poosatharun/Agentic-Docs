@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2 } from 'lucide-react'
 
-/**
- * Textarea + send button bar at the bottom of the AI Chat panel.
- */
 export default function InputBar({ onSend, loading }) {
   const [value,    setValue]    = useState('')
   const textareaRef             = useRef(null)

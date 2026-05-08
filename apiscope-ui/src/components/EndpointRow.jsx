@@ -6,9 +6,6 @@ import MetricsBadges  from './MetricsBadges'
 import { methodColor }           from '../constants/methodColors'
 import { buildEndpointAiPrompt } from '../constants/messages'
 
-/**
- * A single collapsible row in the API Explorer list.
- */
 export default function EndpointRow({ endpoint, onAskAI }) {
   const [expanded, setExpanded] = useState(false)
   const [tryIt,    setTryIt]    = useState(false)

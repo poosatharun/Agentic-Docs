@@ -6,10 +6,6 @@ import SuggestionChips  from './SuggestionChips'
 import { useChat }      from '../hooks/useChat'
 import { Bot, MessageSquare } from 'lucide-react'
 
-/**
- * AI Chat tab — renders the message thread, typing indicator, suggestion chips,
- * and the input bar. All data-fetching and state lives in {@link useChat}.
- */
 export default function AiChat({ pendingQuestion, onPendingConsumed }) {
   const { messages, loading, sendMessage } = useChat()
   const bottomRef       = useRef(null)

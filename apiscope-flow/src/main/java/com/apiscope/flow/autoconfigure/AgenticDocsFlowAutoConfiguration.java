@@ -1,12 +1,16 @@
 package com.apiscope.flow.autoconfigure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.apiscope.flow.sql.FlowStatementInspector;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.web.client.RestClient;
 
@@ -56,6 +60,32 @@ public class AgenticDocsFlowAutoConfiguration {
     @ConditionalOnMissingBean
     public RestClient flowRestClient() {
         return RestClient.create();
+    }
+
+    /**
+     * Registers the Hibernate SQL interceptor only when Hibernate is on the classpath.
+     * When the host application does not use JPA, this inner configuration is skipped entirely.
+     */
+    @Configuration
+    @ConditionalOnClass(name = "org.hibernate.resource.jdbc.spi.StatementInspector")
+    static class HibernateConfig {
+
+        @Bean
+        public FlowStatementInspector flowStatementInspector() {
+            return new FlowStatementInspector();
+        }
+
+        /**
+         * Registers the inspector as the Hibernate session-factory statement inspector.
+         * Using a property customizer is the idiomatic Spring Boot way to configure Hibernate
+         * without touching {@code application.properties}.
+         */
+        @Bean
+        public HibernatePropertiesCustomizer flowHibernatePropertiesCustomizer(
+                FlowStatementInspector inspector) {
+            return props -> props.put(
+                    "hibernate.session_factory.statement_inspector", inspector);
+        }
     }
 }
 
