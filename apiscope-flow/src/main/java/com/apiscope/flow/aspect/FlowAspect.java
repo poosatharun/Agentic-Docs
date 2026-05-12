@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,30 +77,31 @@ public class FlowAspect {
         String          methodName = sig.getName();
         String          layer      = resolveLayer(pjp.getTarget());
         int             stepIndex  = nextStep(traceId);
-        String inputJson  = serializer.serializeArgs(pjp.getArgs());
-        long   start      = System.currentTimeMillis();
+        String inputJson = serializer.serializeArgs(pjp.getArgs());
+        long   start     = System.currentTimeMillis();
         SqlCapture.begin();
 
+        Object    result = null;
+        Throwable error  = null;
         try {
-            Object result     = pjp.proceed();
-            long   durationMs = System.currentTimeMillis() - start;
-
-            sink.pushStep(traceId, new TraceEvent(
-                    traceId, stepIndex, layer, className, methodName,
-                    inputJson, serializer.serializeValue(result), durationMs, "EXIT", null,
-                    SqlCapture.drain()));
-
+            result = pjp.proceed();
             return result;
-
         } catch (Throwable ex) {
-            long durationMs = System.currentTimeMillis() - start;
-
-            sink.pushStep(traceId, new TraceEvent(
-                    traceId, stepIndex, layer, className, methodName,
-                    inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(ex),
-                    SqlCapture.drain()));
-
+            error = ex;
             throw ex;
+        } finally {
+            // drain() must run on every code path to prevent ThreadLocal leaks
+            long         durationMs = System.currentTimeMillis() - start;
+            List<String> queries    = SqlCapture.drain();
+            if (error == null) {
+                sink.pushStep(traceId, new TraceEvent(
+                        traceId, stepIndex, layer, className, methodName,
+                        inputJson, serializer.serializeValue(result), durationMs, "EXIT", null, queries));
+            } else {
+                sink.pushStep(traceId, new TraceEvent(
+                        traceId, stepIndex, layer, className, methodName,
+                        inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(error), queries));
+            }
         }
     }
 

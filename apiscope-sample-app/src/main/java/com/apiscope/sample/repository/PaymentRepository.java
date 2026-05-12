@@ -1,20 +1,33 @@
 package com.apiscope.sample.repository;
 
+import com.apiscope.sample.entity.Payment;
+import com.apiscope.sample.repository.dao.PaymentRecordDao;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Simulated payment repository.
- * Represents the persistence layer for payment records — shown as REPOSITORY
- * in the Flow Tracer execution diagram.
+ * AOP-visible REPOSITORY layer for payment operations.
+ * {@link #createPaymentRecord} persists real {@link Payment} rows to the H2 database;
+ * {@link #validatePaymentMethod} simulates the external payment-gateway call (no DB).
+ *
+ * <p>This class uses {@code @Repository} so that {@code FlowAspect} intercepts its
+ * methods and shows a REPOSITORY step in the Flow Tracer execution diagram.
  */
 @Repository
 public class PaymentRepository {
 
+    private final PaymentRecordDao paymentRecordDao;
+
+    public PaymentRepository(PaymentRecordDao paymentRecordDao) {
+        this.paymentRecordDao = paymentRecordDao;
+    }
+
     /**
-     * Validate a payment method (card / wallet) and check it is not expired or blocked.
+     * Validate a stored payment method via the (simulated) payment gateway.
+     * No DB write — gateway calls are stateless.
      *
      * @param paymentMethodId identifier of the stored payment method
      * @return validation result with masked card details
@@ -33,20 +46,32 @@ public class PaymentRepository {
 
     /**
      * Persist a new payment record in PENDING state.
+     * Executes: {@code INSERT INTO payment (...) VALUES (...)}
      *
      * @param orderId the order this payment belongs to
-     * @param amount  the amount to charge in the order's currency
+     * @param amount  the amount to charge in USD
      * @return created payment record
      */
     public Map<String, Object> createPaymentRecord(String orderId, double amount) {
-        simulateLatency(18);
+        String paymentRef = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        Payment payment = new Payment();
+        payment.setPaymentRef(paymentRef);
+        payment.setOrderRef(orderId);
+        payment.setAmount(amount);
+        payment.setCurrency("USD");
+        payment.setStatus("PENDING");
+        payment.setPaymentMethodId("pm_flow_tracer");
+        payment.setCreatedAt(LocalDateTime.now());
+        paymentRecordDao.save(payment);
+
         return Map.of(
-                "paymentId",  "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
+                "paymentId",  paymentRef,
                 "orderId",    orderId,
                 "amount",     amount,
                 "currency",   "USD",
                 "status",     "PENDING",
-                "createdAt",  java.time.Instant.now().toString()
+                "createdAt",  payment.getCreatedAt().toString()
         );
     }
 

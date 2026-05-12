@@ -77,20 +77,16 @@ public class FlowExecutorService {
                     .header(FlowAspect.TRACE_HEADER, traceId)
                     .header("Content-Type", "application/json");
 
-            String rawBody = (request.body() != null && !request.body().isBlank())
-                    ? request.body() : "{}";
-
-            ResponseEntity<String> response;
             if (BODY_METHODS.contains(request.httpMethod().toUpperCase())) {
-                response = spec.body(rawBody)
-                        .retrieve()
-                        .onStatus(status -> true, (req, res) -> {})
-                        .toEntity(String.class);
-            } else {
-                response = spec.retrieve()
-                        .onStatus(status -> true, (req, res) -> {})
-                        .toEntity(String.class);
+                String rawBody = (request.body() != null && !request.body().isBlank())
+                        ? request.body() : "{}";
+                spec = spec.body(rawBody);
             }
+
+            ResponseEntity<String> response = spec
+                    .retrieve()
+                    .onStatus(status -> true, (req, res) -> {})
+                    .toEntity(String.class);
 
             long totalMs  = System.currentTimeMillis() - start;
             int  stepCount = flowAspect.getAndClearStepCount(traceId);

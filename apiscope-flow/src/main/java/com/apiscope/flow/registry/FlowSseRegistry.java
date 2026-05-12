@@ -73,14 +73,12 @@ public class FlowSseRegistry implements TraceEventSink, TraceEmitterProvider {
         }
 
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
-        emitter.onTimeout(() -> {
+        Runnable cleanup = () -> {
             entry.emitter = null;
             registry.remove(traceId);
-        });
-        emitter.onCompletion(() -> {
-            entry.emitter = null;
-            registry.remove(traceId);
-        });
+        };
+        emitter.onTimeout(cleanup);
+        emitter.onCompletion(cleanup);
 
         // Replay buffered events so the frontend never misses a step
         for (BufferedEvent buffered : entry.buffer) {

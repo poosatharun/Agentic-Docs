@@ -1,5 +1,8 @@
 package com.apiscope.sample.service;
 
+import com.apiscope.sample.entity.SalesOrder;
+import com.apiscope.sample.repository.dao.ProductCatalogDao;
+import com.apiscope.sample.repository.dao.SalesOrderDao;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,10 +34,15 @@ public class OrderService {
 
     private final InventoryService inventoryService;
     private final PaymentService   paymentService;
+    private final SalesOrderDao    salesOrderDao;
+    private final ProductCatalogDao productCatalogDao;
 
-    public OrderService(InventoryService inventoryService, PaymentService paymentService) {
-        this.inventoryService = inventoryService;
-        this.paymentService   = paymentService;
+    public OrderService(InventoryService inventoryService, PaymentService paymentService,
+                        SalesOrderDao salesOrderDao, ProductCatalogDao productCatalogDao) {
+        this.inventoryService   = inventoryService;
+        this.paymentService     = paymentService;
+        this.salesOrderDao      = salesOrderDao;
+        this.productCatalogDao  = productCatalogDao;
     }
 
     /**
@@ -111,13 +119,26 @@ public class OrderService {
             Map<String, Object> reservation,
             Map<String, Object> payment) {
 
-        // Simulate DB write
-        try { Thread.sleep(12); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        // Resolve product ID from SKU for the FK column
+        String productSku = (String) orderDetails.get("productId");
+        Long   productId  = productCatalogDao.findBySku(productSku)
+                .map(p -> p.getId()).orElse(null);
+
+        // Persist the confirmed order to the database
+        SalesOrder order = new SalesOrder();
+        order.setOrderRef(orderId);
+        order.setProductId(productId);
+        order.setQuantity((Integer) orderDetails.get("quantity"));
+        order.setUnitPrice((Double) orderDetails.get("unitPrice"));
+        order.setTotalAmount((Double) orderDetails.get("total"));
+        order.setStatus("CONFIRMED");
+        order.setCreatedDate(LocalDate.now());
+        salesOrderDao.save(order);
 
         return Map.of(
                 "orderId",           orderId,
                 "status",            "CONFIRMED",
-                "productId",         orderDetails.get("productId"),
+                "productId",         productSku,
                 "quantity",          orderDetails.get("quantity"),
                 "total",             orderDetails.get("total"),
                 "paymentId",         payment.get("paymentId"),

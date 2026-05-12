@@ -29,18 +29,28 @@ function CopyBtn({ text }) {
   )
 }
 
+function prettyJson(value) {
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value
+    return JSON.stringify(parsed, null, 2)
+  } catch {
+    return value
+  }
+}
+
 function JsonPanel({ label, value, accent }) {
   if (!value || value === 'null') return null
+  const pretty = prettyJson(value)
   return (
     <div className="mt-2">
       <p className={`text-[10px] font-semibold uppercase tracking-widest mb-1 ${accent}`}>{label}</p>
       <div className="rounded-lg overflow-hidden border border-white/6">
         <div className="flex items-center justify-between bg-[#080a10] px-3 py-1.5 border-b border-white/6">
           <span className="text-[10px] text-slate-600 font-mono">json</span>
-          <CopyBtn text={value} />
+          <CopyBtn text={pretty} />
         </div>
         <pre className="bg-[#0a0c14] px-3 py-2.5 text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed">
-          {value}
+          {pretty}
         </pre>
       </div>
     </div>
@@ -54,11 +64,12 @@ export default function FlowStepCard({ step, isLast }) {
   const isHot   = step.durationMs >= HOT_MS
   const layerCls = LAYER_STYLES[step.layer] ?? LAYER_STYLES.COMPONENT
 
-  const durationColor =
+  const durationColor = (
     step.durationMs < FAST_MS ? 'text-emerald-400' :
     step.durationMs < WARN_MS ? 'text-amber-400'   :
     step.durationMs < HOT_MS  ? 'text-orange-400'  :
                                 'text-red-400'
+  )
 
   const hasSql = step.sqlQueries?.length > 0
 

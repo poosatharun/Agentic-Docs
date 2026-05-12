@@ -47,6 +47,19 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Spring Data JPA — real persistence for the Flow Tracer demo -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- H2 in-memory database — zero-config, auto-seeded via data.sql -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Test: Spring Boot integration test support (MockMvc, @SpringBootTest, @MockBean) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

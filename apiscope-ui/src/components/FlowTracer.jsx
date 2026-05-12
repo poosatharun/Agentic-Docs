@@ -64,6 +64,16 @@ export default function FlowTracer() {
 
   const needsBody = BODY_METHODS.has(selectedMethod)
 
+  // Group filtered endpoints by controller name for the <optgroup> select
+  const groupedEndpoints = useMemo(() =>
+    filteredEndpoints.reduce((acc, ep) => {
+      const key = ep.controllerName || 'Other'
+      if (!acc[key]) acc[key] = []
+      acc[key].push(ep)
+      return acc
+    }, {})
+  , [filteredEndpoints])
+
   const handleSelect = (e) => {
     const [method, ...pathParts] = e.target.value.split('|')
     const path = pathParts.join('|')
@@ -166,14 +176,7 @@ export default function FlowTracer() {
                   <option value="" disabled>
                     {epLoading ? 'Loading endpoints…' : filteredEndpoints.length === 0 ? 'No matches' : 'Select an endpoint…'}
                   </option>
-                  {Object.entries(
-                    filteredEndpoints.reduce((acc, ep) => {
-                      const key = ep.controllerName || 'Other'
-                      if (!acc[key]) acc[key] = []
-                      acc[key].push(ep)
-                      return acc
-                    }, {})
-                  ).map(([controller, eps]) => (
+                  {Object.entries(groupedEndpoints).map(([controller, eps]) => (
                     <optgroup key={controller} label={controller}>
                       {eps.map((ep) => (
                         <option key={`${ep.httpMethod}|${ep.path}`} value={`${ep.httpMethod}|${ep.path}`}>
