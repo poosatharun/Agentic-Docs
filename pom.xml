@@ -31,20 +31,20 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/tharun423/Agentic-Docs.git</connection>
-        <developerConnection>scm:git:ssh://github.com/tharun423/Agentic-Docs.git</developerConnection>
-        <url>https://github.com/tharun423/Agentic-Docs</url>
+        <connection>scm:git:git://github.com/tharun423/APIScope.git</connection>
+        <developerConnection>scm:git:ssh://github.com/tharun423/APIScope.git</developerConnection>
+        <url>https://github.com/tharun423/APIScope</url>
         <tag>v1.0.0</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/tharun423/Agentic-Docs/issues</url>
+        <url>https://github.com/tharun423/APIScope/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>GitHub Actions</system>
-        <url>https://github.com/tharun423/Agentic-Docs/actions</url>
+        <url>https://github.com/tharun423/APIScope/actions</url>
     </ciManagement>
 
     <modules>

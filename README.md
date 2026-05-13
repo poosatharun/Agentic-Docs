@@ -48,7 +48,7 @@ agentic-docs/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/tharun423/Agentic-Docs.git
+git clone https://github.com/tharun423/APIScope.git
 cd Agentic-Docs
 ```
 

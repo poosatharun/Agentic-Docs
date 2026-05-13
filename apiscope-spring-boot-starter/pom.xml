@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
     <name>APIScope Spring Boot Starter</name>
     <description>Spring Boot auto-configuration starter that wires up Agentic Docs with zero configuration for Ollama.</description>
-    <url>https://github.com/tharun423/Agentic-Docs</url>
+    <url>https://github.com/tharun423/APIScope</url>
 
     <dependencies>
         <!-- AutoConfiguration support -->
