@@ -91,20 +91,20 @@ jobs:
           node-version: '20'
           # Cache the node_modules folder between runs for faster CI
           cache: 'npm'
-          cache-dependency-path: agentic-docs-ui/package-lock.json
+          cache-dependency-path: apiscope-ui/package-lock.json
 
       # Install all npm packages listed in package.json
       - name: Install npm dependencies
-        working-directory: agentic-docs-ui
+        working-directory: apiscope-ui
         run: npm ci   # 'npm ci' is faster and stricter than 'npm install' in CI
 
       # Run the ESLint linter to catch code quality issues
       # If ESLint reports errors, this step fails and the CI run turns red.
       - name: Run ESLint
-        working-directory: agentic-docs-ui
+        working-directory: apiscope-ui
         run: npm run lint
 
       # Verify the React app builds without errors
       - name: Build UI
-        working-directory: agentic-docs-ui
+        working-directory: apiscope-ui
         run: npm run build

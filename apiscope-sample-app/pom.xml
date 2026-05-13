@@ -100,6 +100,26 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!--
+                The parent POM attaches sources and Javadoc JARs for every module.
+                Skip both for the sample app — it is never published to Central
+                and the Spring Boot fat-JAR repackage would otherwise produce
+                misleading library artifacts.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <skipSource>true</skipSource>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
