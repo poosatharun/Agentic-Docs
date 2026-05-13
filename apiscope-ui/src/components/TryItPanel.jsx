@@ -3,8 +3,8 @@ import { Play, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useTryIt }    from '../hooks/useTryIt'
 import { BODY_METHODS } from '../api/tryItApi'
 
-export default function TryItPanel({ endpoint }) {
-  const { body, setBody, pathParams, setPathParam, queryParams, setQueryParam, response, loading, execute } = useTryIt(endpoint)
+export default function TryItPanel({ endpoint, token }) {
+  const { body, setBody, pathParams, setPathParam, queryParams, setQueryParam, response, loading, execute } = useTryIt(endpoint, token)
   const [showOptional, setShowOptional] = useState(false)
 
   const paramNames         = [...(endpoint.path.matchAll(/\{(\w+)\}/g))].map((m) => m[1])

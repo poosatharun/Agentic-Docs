@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Search, BookOpen, Layers, AlertCircle, Zap, CheckCircle2, Loader2 } from 'lucide-react'
+import { Search, BookOpen, Layers, AlertCircle, Zap, CheckCircle2, Loader2, KeyRound } from 'lucide-react'
 import EndpointRow  from './EndpointRow'
 import { methodColor } from '../constants/methodColors'
 import { useEndpoints } from '../hooks/useEndpoints'
@@ -9,6 +9,14 @@ export default function ApiExplorer({ onAskAI }) {
   const { endpoints, loading, error } = useEndpoints()
   const [search,       setSearch]       = useState('')
   const [filterMethod, setFilterMethod] = useState('ALL')
+  const [token,        setToken]        = useState(() => localStorage.getItem('apiscope_bearer_token') ?? '')
+  const [showToken,    setShowToken]    = useState(false)
+
+  const handleTokenChange = (val) => {
+    setToken(val)
+    if (val) localStorage.setItem('apiscope_bearer_token', val)
+    else     localStorage.removeItem('apiscope_bearer_token')
+  }
 
   // Warm-up state: idle | running | done
   const [warmup, setWarmup] = useState({ state: 'idle', done: 0, total: 0, ok: 0, failed: 0 })
@@ -128,6 +136,40 @@ export default function ApiExplorer({ onAskAI }) {
           </div>
         </div>
 
+        {/* Bearer token row */}
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            onClick={() => setShowToken((v) => !v)}
+            title={token ? 'Bearer token set' : 'Set Bearer token for secured endpoints'}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all duration-150 ${
+              token
+                ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                : 'border-white/10 text-slate-500 hover:text-white hover:border-white/20'
+            }`}
+          >
+            <KeyRound size={11} />
+            {token ? 'Token set' : 'Bearer token'}
+          </button>
+          {showToken && (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="password"
+                value={token}
+                onChange={(e) => handleTokenChange(e.target.value)}
+                placeholder="Paste JWT / Bearer token here — stored in localStorage"
+                className="flex-1 bg-[#1a1d2e] border border-white/8 rounded-lg px-3 py-1.5 text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500/50 transition-colors"
+              />
+              {token && (
+                <button
+                  onClick={() => handleTokenChange('')}
+                  className="text-slate-600 hover:text-red-400 text-xs transition-colors"
+                  title="Clear token"
+                >✕</button>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Search + filter row */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-48 bg-[#1a1d2e] border border-white/8 rounded-xl px-3 py-2 focus-within:border-violet-500/50 transition-colors">
@@ -192,7 +234,7 @@ export default function ApiExplorer({ onAskAI }) {
               </div>
               <div className="flex flex-col gap-2">
                 {eps.map((ep) => (
-                  <EndpointRow key={`${ep.httpMethod}-${ep.path}`} endpoint={ep} onAskAI={onAskAI} />
+                  <EndpointRow key={`${ep.httpMethod}-${ep.path}`} endpoint={ep} onAskAI={onAskAI} token={token} />
                 ))}
               </div>
             </div>

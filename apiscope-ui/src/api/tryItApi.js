@@ -15,7 +15,7 @@ export const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH'])
  * }} params
  * @returns {Promise<{ status: number, ok: boolean, body: string }>}
  */
-export async function executeTryIt({ path, httpMethod, pathParams, queryParams, body }) {
+export async function executeTryIt({ path, httpMethod, pathParams, queryParams, body, token }) {
   // Substitute path parameters into the URL template
   let url = Object.entries(pathParams).reduce(
     (acc, [key, value]) => acc.replace(`{${key}}`, value || key),
@@ -36,10 +36,15 @@ export async function executeTryIt({ path, httpMethod, pathParams, queryParams, 
     options.body = body
   }
 
+  const headers = { 'Content-Type': 'application/json' }
+  if (token && token.trim()) {
+    headers['Authorization'] = `Bearer ${token.trim()}`
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     })
     const text = await response.text()
     let pretty

@@ -21,7 +21,7 @@ import { executeTryIt } from '../api/tryItApi'
  *   execute:        () => Promise<void>,
  * }}
  */
-export function useTryIt(endpoint) {
+export function useTryIt(endpoint, token) {
   const [body,        setBody]       = useState('')
   const [pathParams,  setParams]     = useState({})
   const [queryParams, setQueryState] = useState({})
@@ -45,10 +45,11 @@ export function useTryIt(endpoint) {
       pathParams,
       queryParams,
       body,
+      token,
     })
     setResponse(result)
     setLoading(false)
-  }, [endpoint.path, endpoint.httpMethod, pathParams, queryParams, body])
+  }, [endpoint.path, endpoint.httpMethod, pathParams, queryParams, body, token])
 
   return { body, setBody, pathParams, setPathParam, queryParams, setQueryParam, response, loading, execute }
 }

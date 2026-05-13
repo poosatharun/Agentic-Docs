@@ -6,7 +6,7 @@ import MetricsBadges  from './MetricsBadges'
 import { methodColor }           from '../constants/methodColors'
 import { buildEndpointAiPrompt } from '../constants/messages'
 
-export default function EndpointRow({ endpoint, onAskAI }) {
+export default function EndpointRow({ endpoint, onAskAI, token }) {
   const [expanded, setExpanded] = useState(false)
   const [tryIt,    setTryIt]    = useState(false)
   const c = methodColor(endpoint.httpMethod)
@@ -163,7 +163,7 @@ export default function EndpointRow({ endpoint, onAskAI }) {
             </button>
           </div>
 
-          {tryIt && <TryItPanel endpoint={endpoint} />}
+          {tryIt && <TryItPanel endpoint={endpoint} token={token} />}
         </div>
       )}
     </div>
