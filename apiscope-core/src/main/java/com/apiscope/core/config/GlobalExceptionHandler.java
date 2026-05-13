@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles unexpected runtime errors in chat/stream endpoints.
-     * Returns: { "error": "<message>" } with HTTP 500.
+     * Returns: { "error": "{@code <message>}" } with HTTP 500.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericErrors(Exception ex) {

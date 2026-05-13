@@ -129,7 +129,7 @@ class AgenticDocsChatControllerTest {
     void getEndpoints_returns200WithEndpointList() throws Exception {
         ApiEndpointMetadata fakeEndpoint =
                 new ApiEndpointMetadata("/api/users", "GET", "UserController", "getAllUsers",
-                        "List all users", List.of(), List.of(), null, null);
+                        "List all users", List.of(), List.of(), List.of(), null, null);
         when(endpointRepository.getScannedEndpoints()).thenReturn(List.of(fakeEndpoint));
 
         mockMvc.perform(get("/apiscope/api/endpoints"))

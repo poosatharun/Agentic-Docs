@@ -45,8 +45,8 @@ class ApiDocumentIngestorTest {
     @DisplayName("onScanCompleted() adds one Document per scanned endpoint")
     void onScanCompleted_addsOneDocumentPerEndpoint() {
         List<ApiEndpointMetadata> endpoints = List.of(
-                new ApiEndpointMetadata("/api/users",    "GET",  "UserController",    "getUsers",    "List users",     List.of(), List.of(), null, null),
-                new ApiEndpointMetadata("/api/payments", "POST", "PaymentController", "makePayment", "Make a payment", List.of(), List.of(), "PaymentRequest", "PaymentResponse")
+                new ApiEndpointMetadata("/api/users",    "GET",  "UserController",    "getUsers",    "List users",     List.of(), List.of(), List.of(), null, null),
+                new ApiEndpointMetadata("/api/payments", "POST", "PaymentController", "makePayment", "Make a payment", List.of(), List.of(), List.of(), "PaymentRequest", "PaymentResponse")
         );
 
         ingestor.onScanCompleted(eventWith(endpoints));
@@ -61,7 +61,7 @@ class ApiDocumentIngestorTest {
     @DisplayName("onScanCompleted() embeds endpoint details in the document text")
     void onScanCompleted_embeds_endpointDetails_inDocumentText() {
         List<ApiEndpointMetadata> endpoints = List.of(
-                new ApiEndpointMetadata("/api/orders", "DELETE", "OrderController", "cancelOrder", "Cancel an order", List.of(), List.of(), null, "void")
+                new ApiEndpointMetadata("/api/orders", "DELETE", "OrderController", "cancelOrder", "Cancel an order", List.of(), List.of(), List.of(), null, "void")
         );
 
         ingestor.onScanCompleted(eventWith(endpoints));
@@ -87,7 +87,7 @@ class ApiDocumentIngestorTest {
     @DisplayName("onScanCompleted() is idempotent - second call is silently ignored")
     void onScanCompleted_isIdempotent_secondCallIgnored() {
         List<ApiEndpointMetadata> endpoints = List.of(
-                new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
+                new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), List.of(), null, null)
         );
 
         ingestor.onScanCompleted(eventWith(endpoints));
@@ -100,7 +100,7 @@ class ApiDocumentIngestorTest {
     @DisplayName("onScanCompleted() continues gracefully when vectorStore.add() throws")
     void onScanCompleted_continuesGracefully_whenVectorStoreThrows() {
         List<ApiEndpointMetadata> endpoints = List.of(
-                new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), null, null)
+                new ApiEndpointMetadata("/api/users", "GET", "UserController", "getUsers", "List users", List.of(), List.of(), List.of(), null, null)
         );
         doThrow(new RuntimeException("Embedding model not available")).when(vectorStore).add(any());
 
