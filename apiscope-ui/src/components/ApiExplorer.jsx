@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react'
-import { Search, BookOpen, Layers, AlertCircle, Zap, CheckCircle2, Loader2, KeyRound } from 'lucide-react'
+import { Search, BookOpen, Layers, AlertCircle, Zap, CheckCircle2, Loader2, KeyRound, RefreshCw } from 'lucide-react'
 import EndpointRow  from './EndpointRow'
 import { methodColor } from '../constants/methodColors'
 import { useEndpoints } from '../hooks/useEndpoints'
 import { warmupAllEndpoints } from '../api/warmupApi'
+import { REINDEX_URL } from '../constants/apiUrls'
 
 export default function ApiExplorer({ onAskAI }) {
   const { endpoints, loading, error } = useEndpoints()
@@ -20,6 +21,19 @@ export default function ApiExplorer({ onAskAI }) {
 
   // Warm-up state: idle | running | done
   const [warmup, setWarmup] = useState({ state: 'idle', done: 0, total: 0, ok: 0, failed: 0 })
+  const [reindex, setReindex] = useState('idle') // idle | running | done | error
+
+  const handleReindex = useCallback(async () => {
+    if (reindex === 'running') return
+    setReindex('running')
+    try {
+      const res = await fetch(REINDEX_URL, { method: 'POST' })
+      setReindex(res.ok ? 'done' : 'error')
+    } catch {
+      setReindex('error')
+    }
+    setTimeout(() => setReindex('idle'), 4000)
+  }, [reindex])
 
   const handleWarmup = useCallback(async () => {
     if (warmup.state === 'running' || endpoints.length === 0) return
@@ -132,6 +146,27 @@ export default function ApiExplorer({ onAskAI }) {
                   Warm Up Metrics
                 </>
               )}
+            </button>
+
+            {/* Reindex button */}
+            <button
+              onClick={handleReindex}
+              disabled={reindex === 'running'}
+              title="Force re-embed all endpoints into the vector store (refreshes AI context)"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border ${
+                reindex === 'running'
+                  ? 'border-amber-500/40 text-amber-400 bg-amber-500/10 cursor-not-allowed'
+                  : reindex === 'done'
+                  ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                  : reindex === 'error'
+                  ? 'border-red-500/40 text-red-400 bg-red-500/10'
+                  : 'border-violet-500/40 text-violet-400 hover:bg-violet-500/10 hover:border-violet-400'
+              }`}
+            >
+              {reindex === 'running' ? <><Loader2 size={11} className="animate-spin" /> Reindexing…</>
+                : reindex === 'done'    ? <><CheckCircle2 size={11} /> Reindexed</>
+                : reindex === 'error'   ? <>Failed</>
+                : <><RefreshCw size={11} /> Reindex AI</>}
             </button>
           </div>
         </div>

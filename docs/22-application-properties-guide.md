@@ -4,6 +4,7 @@ This guide covers every `application.properties` setting you need when integrati
 
 ---
 
+
 ## File Layout
 
 Create two files under `src/main/resources/`:
@@ -43,6 +44,13 @@ apiscope.vector-store-path=./apiscope-vector-store.json
 # Override the built-in LLM system prompt (optional).
 # MUST contain the {context} placeholder — used to inject retrieved API docs.
 # apiscope.system-prompt=You are a concise API assistant. {context}
+
+#mandatory
+spring.profiles.active=ollama
+apiscope.vector-store-path=./apiscope-vector-store.json
+apiscope.rate-limit.enabled=true
+apiscope.rate-limit.requests-per-minute=20
+apiscope.flow.enabled=true
 
 # ── Rate Limiting ─────────────────────────────────────────────────────────────
 # Per-IP token-bucket rate limiting on /apiscope/api/chat.

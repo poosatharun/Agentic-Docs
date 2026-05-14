@@ -28,7 +28,7 @@ export async function warmupAllEndpoints(endpoints, onProgress) {
   const total = endpoints.length
 
   await Promise.allSettled(
-    endpoints.map(async (ep, idx) => {
+    endpoints.map(async (ep) => {
       const url    = buildUrl(ep.path)
       const method = ep.httpMethod.toUpperCase()
       const needsBody = ['POST', 'PUT', 'PATCH'].includes(method)

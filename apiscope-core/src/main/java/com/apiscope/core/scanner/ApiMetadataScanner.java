@@ -6,33 +6,34 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-
-import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ValueConstants;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Scans all {@code @RestController} endpoints on {@link ContextRefreshedEvent}
  * and publishes an {@link ApiScanCompletedEvent} for downstream ingestors.
- * Override {@link #extractDescription(Method)} to customise how descriptions are resolved.
  */
 @Component
 public class ApiMetadataScanner implements EndpointRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ApiMetadataScanner.class);
 
-    private static final List<String> INTERNAL_PACKAGE_PREFIXES = List.of(
+    private static final List<String> INTERNAL_PACKAGES = List.of(
             "com.apiscope.core",
             "com.apiscope.autoconfigure",
             "com.apiscope.flow"
@@ -43,8 +44,9 @@ public class ApiMetadataScanner implements EndpointRepository {
     private final AtomicBoolean scanned = new AtomicBoolean(false);
     private volatile List<ApiEndpointMetadata> scannedEndpoints = List.of();
 
-    public ApiMetadataScanner(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping,
-                               ApplicationEventPublisher eventPublisher) {
+    public ApiMetadataScanner(
+            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping,
+            ApplicationEventPublisher eventPublisher) {
         this.handlerMapping = handlerMapping;
         this.eventPublisher = eventPublisher;
     }
@@ -65,21 +67,27 @@ public class ApiMetadataScanner implements EndpointRepository {
         eventPublisher.publishEvent(new ApiScanCompletedEvent(this, endpoints));
     }
 
+    @Override
+    public List<ApiEndpointMetadata> getScannedEndpoints() {
+        return scannedEndpoints;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
     private boolean isUserController(Class<?> beanType) {
         return beanType.isAnnotationPresent(org.springframework.web.bind.annotation.RestController.class)
-                && INTERNAL_PACKAGE_PREFIXES.stream().noneMatch(beanType.getName()::startsWith);
+                && INTERNAL_PACKAGES.stream().noneMatch(beanType.getName()::startsWith);
     }
 
     private ApiEndpointMetadata toMetadata(RequestMappingInfo info, HandlerMethod hm) {
-        Class<?> beanType = hm.getBeanType();
         Method method = hm.getMethod();
         return new ApiEndpointMetadata(
                 extractPath(info),
                 extractHttpMethod(info),
-                beanType.getSimpleName(),
+                hm.getBeanType().getSimpleName(),
                 method.getName(),
                 extractDescription(method),
-                extractAnnotatedParams(hm, PathVariable.class),
+                extractPathParams(hm),
                 extractRequiredQueryParams(hm),
                 extractOptionalQueryParams(hm),
                 extractRequestBodyType(hm),
@@ -87,18 +95,12 @@ public class ApiMetadataScanner implements EndpointRepository {
         );
     }
 
-    /** Returns the immutable list of discovered endpoints. */
-    public List<ApiEndpointMetadata> getScannedEndpoints() {
-        return scannedEndpoints;
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
     private String extractPath(RequestMappingInfo info) {
         var patternValues = info.getPatternValues();
         if (patternValues != null && !patternValues.isEmpty()) return patternValues.iterator().next();
         var condition = info.getPathPatternsCondition();
-        if (condition != null && !condition.getPatterns().isEmpty()) return condition.getPatterns().iterator().next().toString();
+        if (condition != null && !condition.getPatterns().isEmpty())
+            return condition.getPatterns().iterator().next().toString();
         return "/unknown";
     }
 
@@ -107,86 +109,61 @@ public class ApiMetadataScanner implements EndpointRepository {
         return methods.isEmpty() ? "GET" : methods.iterator().next().name();
     }
 
-    /** Extracts names of parameters annotated with {@code annotationType} (PathVariable or RequestParam). */
-    private <A extends java.lang.annotation.Annotation> List<String> extractAnnotatedParams(
-            HandlerMethod hm, Class<A> annotationType) {
+    private List<String> extractPathParams(HandlerMethod hm) {
         return Arrays.stream(hm.getMethodParameters())
-                .filter(mp -> mp.hasParameterAnnotation(annotationType))
-                .map(mp -> resolveParamName(mp, annotationType))
+                .filter(mp -> mp.hasParameterAnnotation(PathVariable.class))
+                .map(mp -> resolveParamName(mp, mp.getParameterAnnotation(PathVariable.class).value(),
+                                               mp.getParameterAnnotation(PathVariable.class).name()))
                 .toList();
     }
 
-    /** Required @RequestParam: required=true AND no defaultValue set. */
     private List<String> extractRequiredQueryParams(HandlerMethod hm) {
         return Arrays.stream(hm.getMethodParameters())
                 .filter(mp -> mp.hasParameterAnnotation(RequestParam.class))
-                .filter(mp -> isRequiredRequestParam(mp))
-                .map(mp -> resolveParamName(mp, RequestParam.class))
+                .filter(this::isRequired)
+                .map(mp -> resolveParamName(mp, mp.getParameterAnnotation(RequestParam.class).value(),
+                                               mp.getParameterAnnotation(RequestParam.class).name()))
                 .toList();
     }
 
-    /** Optional @RequestParam: required=false OR has a defaultValue. */
     private List<String> extractOptionalQueryParams(HandlerMethod hm) {
         return Arrays.stream(hm.getMethodParameters())
                 .filter(mp -> mp.hasParameterAnnotation(RequestParam.class))
-                .filter(mp -> !isRequiredRequestParam(mp))
-                .map(mp -> resolveParamName(mp, RequestParam.class))
+                .filter(mp -> !isRequired(mp))
+                .map(mp -> resolveParamName(mp, mp.getParameterAnnotation(RequestParam.class).value(),
+                                               mp.getParameterAnnotation(RequestParam.class).name()))
                 .toList();
     }
 
-    private boolean isRequiredRequestParam(MethodParameter mp) {
+    private boolean isRequired(MethodParameter mp) {
         RequestParam ann = mp.getParameterAnnotation(RequestParam.class);
         if (ann == null) return false;
-        // Has a non-sentinel defaultValue → optional
-        String def = ann.defaultValue();
-        boolean hasDefault = !def.equals(org.springframework.web.bind.annotation.ValueConstants.DEFAULT_NONE);
-        return ann.required() && !hasDefault;
+        return ann.required() && ValueConstants.DEFAULT_NONE.equals(ann.defaultValue());
     }
 
-    @SuppressWarnings("unchecked")
-    private <A extends java.lang.annotation.Annotation> String resolveParamName(MethodParameter mp, Class<A> type) {
-        A ann = mp.getParameterAnnotation(type);
+    /**
+     * Resolves a parameter name from annotation value/name attributes first,
+     * then falls back to the compiled parameter name (requires -parameters flag).
+     */
+    private String resolveParamName(MethodParameter mp, String annotationValue, String annotationName) {
+        if (!annotationValue.isBlank()) return annotationValue;
+        if (!annotationName.isBlank())  return annotationName;
 
-        // 1. Explicit value() on the annotation, e.g. @RequestParam("fromDate")
-        try {
-            String value = (String) type.getMethod("value").invoke(ann);
-            if (value != null && !value.isBlank()) return value;
-        } catch (Exception ignored) {}
-
-        // 2. Explicit name() alias, e.g. @RequestParam(name = "fromDate")
-        try {
-            String name = (String) type.getMethod("name").invoke(ann);
-            if (name != null && !name.isBlank()) return name;
-        } catch (Exception ignored) {}
-
-        // 3. Java reflect Parameter.getName() — works when compiled with -parameters
-        //    (already set in parent pom: <parameters>true</parameters>)
-        java.lang.reflect.Parameter[] params = mp.getMethod() != null
-                ? mp.getMethod().getParameters()
-                : new java.lang.reflect.Parameter[0];
-        int idx = mp.getParameterIndex();
-        if (idx >= 0 && idx < params.length) {
-            String reflectName = params[idx].getName();
-            if (reflectName != null && !reflectName.isBlank() && !reflectName.startsWith("arg")) {
-                return reflectName;
-            }
-        }
-
-        // 4. Spring's own ParameterNameDiscoverer (fallback)
-        mp.initParameterNameDiscovery(new org.springframework.core.DefaultParameterNameDiscoverer());
+        // Fall back to compiled parameter name
+        mp.initParameterNameDiscovery(new DefaultParameterNameDiscoverer());
         String discovered = mp.getParameterName();
         return discovered != null ? discovered : "param" + mp.getParameterIndex();
     }
 
-    private String extractRequestBodyType(HandlerMethod handlerMethod) {
-        return Arrays.stream(handlerMethod.getMethodParameters())
+    private String extractRequestBodyType(HandlerMethod hm) {
+        return Arrays.stream(hm.getMethodParameters())
                 .filter(mp -> mp.hasParameterAnnotation(RequestBody.class))
                 .map(mp -> mp.getParameterType().getSimpleName())
                 .findFirst().orElse(null);
     }
 
-    private String extractResponseType(HandlerMethod handlerMethod) {
-        Method method = handlerMethod.getMethod();
+    private String extractResponseType(HandlerMethod hm) {
+        Method method = hm.getMethod();
         Class<?> returnType = method.getReturnType();
         if (returnType == void.class || returnType == Void.class) return "void";
         if ("ResponseEntity".equals(returnType.getSimpleName())
@@ -215,13 +192,7 @@ public class ApiMetadataScanner implements EndpointRepository {
         return camelToSentence(method.getName());
     }
 
-    /**
-     * Converts a camelCase identifier to a title-cased sentence.
-     * <pre>
-     *   "getEmployeeById"  →  "Get Employee By Id"
-     *   "listOrders"       →  "List Orders"
-     * </pre>
-     */
+    /** Converts camelCase to a title-cased sentence: {@code "getById"} → {@code "Get By Id"}. */
     private static String camelToSentence(String name) {
         if (name == null || name.isBlank()) return name;
         String spaced = name.replaceAll("([A-Z])", " $1").trim();

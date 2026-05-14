@@ -65,7 +65,7 @@ export function sendChatMessageStream(question, onToken, onDone, onError) {
                 onError(data)
                 return
               }
-              eventName = null
+              eventName = null // reset after consuming data line
             }
           }
           return pump()

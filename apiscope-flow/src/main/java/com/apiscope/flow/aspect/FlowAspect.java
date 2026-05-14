@@ -81,27 +81,21 @@ public class FlowAspect {
         long   start     = System.currentTimeMillis();
         SqlCapture.begin();
 
-        Object    result = null;
-        Throwable error  = null;
         try {
-            result = pjp.proceed();
+            Object result = pjp.proceed();
+            long durationMs = System.currentTimeMillis() - start;
+            List<String> queries = SqlCapture.drain();
+            sink.pushStep(traceId, new TraceEvent(
+                    traceId, stepIndex, layer, className, methodName,
+                    inputJson, serializer.serializeValue(result), durationMs, "EXIT", null, queries));
             return result;
         } catch (Throwable ex) {
-            error = ex;
+            long durationMs = System.currentTimeMillis() - start;
+            List<String> queries = SqlCapture.drain(); // always drain to prevent ThreadLocal leaks
+            sink.pushStep(traceId, new TraceEvent(
+                    traceId, stepIndex, layer, className, methodName,
+                    inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(ex), queries));
             throw ex;
-        } finally {
-            // drain() must run on every code path to prevent ThreadLocal leaks
-            long         durationMs = System.currentTimeMillis() - start;
-            List<String> queries    = SqlCapture.drain();
-            if (error == null) {
-                sink.pushStep(traceId, new TraceEvent(
-                        traceId, stepIndex, layer, className, methodName,
-                        inputJson, serializer.serializeValue(result), durationMs, "EXIT", null, queries));
-            } else {
-                sink.pushStep(traceId, new TraceEvent(
-                        traceId, stepIndex, layer, className, methodName,
-                        inputJson, null, durationMs, "ERROR", serializer.buildErrorMessage(error), queries));
-            }
         }
     }
 

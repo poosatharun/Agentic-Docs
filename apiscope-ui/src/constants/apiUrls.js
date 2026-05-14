@@ -11,3 +11,4 @@ export const CHAT_URL            = `${BASE_URL}/apiscope/api/chat`
 export const CHAT_STREAM_URL     = `${BASE_URL}/apiscope/api/chat/stream`
 export const ENDPOINTS_URL       = `${BASE_URL}/apiscope/api/endpoints`
 export const ENDPOINT_METRICS_URL = `${BASE_URL}/apiscope/api/endpoint-metrics`
+export const REINDEX_URL         = `${BASE_URL}/apiscope/api/admin/reindex`

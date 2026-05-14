@@ -77,6 +77,10 @@ public class FlowExecutorService {
                     .header(FlowAspect.TRACE_HEADER, traceId)
                     .header("Content-Type", "application/json");
 
+            if (request.authorizationHeader() != null && !request.authorizationHeader().isBlank()) {
+                spec = spec.header("Authorization", request.authorizationHeader());
+            }
+
             if (BODY_METHODS.contains(request.httpMethod().toUpperCase())) {
                 String rawBody = (request.body() != null && !request.body().isBlank())
                         ? request.body() : "{}";

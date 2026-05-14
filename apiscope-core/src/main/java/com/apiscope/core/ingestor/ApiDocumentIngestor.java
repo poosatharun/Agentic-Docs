@@ -40,19 +40,32 @@ public class ApiDocumentIngestor {
     @EventListener
     public void onScanCompleted(ApiScanCompletedEvent event) {
         if (!ingested.compareAndSet(false, true)) return;
+        ingest(vectorStoreProvider.getIfAvailable(), event.endpoints(), false);
+    }
 
-        VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
+    /**
+     * Forces a full re-ingest regardless of whether the vector store file exists.
+     * Deletes the existing file, resets the ingested flag, then re-embeds all endpoints.
+     */
+    public void reindex(List<ApiEndpointMetadata> endpoints) {
+        new File(properties.vectorStorePath()).delete();
+        ingested.set(false);
+        ingest(vectorStoreProvider.getIfAvailable(), endpoints, true);
+    }
+
+    private void ingest(VectorStore vectorStore, List<ApiEndpointMetadata> endpoints, boolean forced) {
+        if (!ingested.compareAndSet(false, true)) return;
+
         if (vectorStore == null) {
             log.info("[APIScope] No VectorStore available — skipping ingest. AI chat will not work.");
             return;
         }
 
-        if (new File(properties.vectorStorePath()).exists()) {
+        if (!forced && new File(properties.vectorStorePath()).exists()) {
             log.info("[APIScope] Vector store found on disk — skipping ingest.");
             return;
         }
 
-        List<ApiEndpointMetadata> endpoints = event.endpoints();
         if (endpoints.isEmpty()) {
             log.warn("[APIScope] No endpoints found to ingest. Is the host app a @SpringBootApplication?");
             return;

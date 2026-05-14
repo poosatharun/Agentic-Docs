@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -15,9 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import java.io.File;
 
 /**
- * Provides a file-backed {@link SimpleVectorStore} as a fallback (no external DB required).
+ * Provides a file-backed {@link SimpleVectorStore} when no other {@link VectorStore} is present.
  * Loads saved embeddings from disk on startup and saves them back on shutdown.
- * Skipped automatically if another {@link VectorStore} bean is present.
  * Configure the path via {@code apiscope.vector-store-path}.
  */
 @Configuration
@@ -25,12 +23,10 @@ public class VectorStoreConfig {
 
     private static final Logger log = LoggerFactory.getLogger(VectorStoreConfig.class);
 
-    private final ObjectProvider<SimpleVectorStore> storeProvider;
     private final AgenticDocsProperties properties;
+    private SimpleVectorStore store;
 
-    public VectorStoreConfig(ObjectProvider<SimpleVectorStore> storeProvider,
-                             AgenticDocsProperties properties) {
-        this.storeProvider = storeProvider;
+    public VectorStoreConfig(AgenticDocsProperties properties) {
         this.properties = properties;
     }
 
@@ -38,8 +34,7 @@ public class VectorStoreConfig {
     @ConditionalOnBean(EmbeddingModel.class)
     @ConditionalOnMissingBean(VectorStore.class)
     public SimpleVectorStore vectorStore(EmbeddingModel embeddingModel) {
-        SimpleVectorStore store = SimpleVectorStore.builder(embeddingModel).build();
-
+        store = SimpleVectorStore.builder(embeddingModel).build();
         File storeFile = new File(properties.vectorStorePath());
         if (storeFile.exists()) {
             store.load(storeFile);
@@ -52,9 +47,7 @@ public class VectorStoreConfig {
 
     @PreDestroy
     public void saveOnShutdown() {
-        SimpleVectorStore store = storeProvider.getIfAvailable();
         if (store == null) return;
-
         File storeFile = new File(properties.vectorStorePath());
         try {
             store.save(storeFile);

@@ -26,7 +26,6 @@ public class AgenticDocsChatService implements ChatPort {
 
     private static final Logger log = LoggerFactory.getLogger(AgenticDocsChatService.class);
 
-    // Default system prompt — override via apiscope.system-prompt
     static final String DEFAULT_SYSTEM_PROMPT = """
             You are an expert API assistant embedded inside developer documentation.
             Your sole job is to help developers understand and use the REST APIs of THIS application.
@@ -72,6 +71,8 @@ public class AgenticDocsChatService implements ChatPort {
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     private static final int MAX_QUESTION_LENGTH = 800;
+    private static final String FALLBACK_ANSWER =
+            "I could not find a relevant endpoint for that. Please check the API Explorer tab.";
 
     private final ObjectProvider<VectorStorePort> vectorStorePortProvider;
     private final LlmPort llmPort;
@@ -89,10 +90,8 @@ public class AgenticDocsChatService implements ChatPort {
     public ChatResponse answer(ChatRequest request) {
         String safeQuestion = sanitize(request.question());
         log.debug("[APIScope] Processing question: {}", safeQuestion);
-
-        RagContext ctx = buildRagContext(safeQuestion);
-        String answer = llmPort.complete(ctx.systemPrompt(), ctx.context(), safeQuestion);
-        if (answer == null || answer.isBlank()) answer = "I could not find a relevant endpoint for that. Please check the API Explorer tab.";
+        String answer = llmPort.complete(systemPrompt(), context(safeQuestion), safeQuestion);
+        if (answer == null || answer.isBlank()) answer = FALLBACK_ANSWER;
         return new ChatResponse(answer);
     }
 
@@ -100,22 +99,20 @@ public class AgenticDocsChatService implements ChatPort {
     public Flux<String> streamAnswer(ChatRequest request) {
         String safeQuestion = sanitize(request.question());
         log.debug("[APIScope] Streaming question: {}", safeQuestion);
-
-        RagContext ctx = buildRagContext(safeQuestion);
-        return llmPort.stream(ctx.systemPrompt(), ctx.context(), safeQuestion);
+        return llmPort.stream(systemPrompt(), context(safeQuestion), safeQuestion);
     }
 
-    private RagContext buildRagContext(String question) {
+    private String context(String question) {
         VectorStorePort vectorStorePort = vectorStorePortProvider.getIfAvailable();
-        List<String> chunks = (vectorStorePort != null)
-                ? vectorStorePort.findRelevantContext(question, properties.topK())
-                : List.of();
+        if (vectorStorePort == null) return "";
+        List<String> chunks = vectorStorePort.findRelevantContext(question, properties.topK());
         log.debug("[APIScope] Retrieved {} context chunks.", chunks.size());
-        String context = String.join("\n---\n", chunks);
-        String systemPrompt = (properties.systemPrompt() != null && !properties.systemPrompt().isBlank())
-                ? properties.systemPrompt()
-                : DEFAULT_SYSTEM_PROMPT;
-        return new RagContext(context, systemPrompt);
+        return String.join("\n---\n", chunks);
+    }
+
+    private String systemPrompt() {
+        String custom = properties.systemPrompt();
+        return (custom != null && !custom.isBlank()) ? custom : DEFAULT_SYSTEM_PROMPT;
     }
 
     /** Truncates input and blocks prompt-injection attempts. */
@@ -126,6 +123,4 @@ public class AgenticDocsChatService implements ChatPort {
                 ? "[BLOCKED: prompt injection attempt detected]"
                 : trimmed;
     }
-
-    private record RagContext(String context, String systemPrompt) {}
 }

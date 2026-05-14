@@ -25,7 +25,7 @@ export default function EndpointRow({ endpoint, onAskAI, token }) {
         <MethodBadge method={endpoint.httpMethod} />
         <code className="text-slate-300 text-xs font-mono flex-1 truncate tracking-wide">{endpoint.path}</code>
         <MetricsBadges path={endpoint.path} method={endpoint.httpMethod} />
-        {endpoint.description && endpoint.description !== 'No description provided.' && (
+        {endpoint.description && (
           <span className="text-slate-600 text-xs truncate max-w-xs hidden lg:block">{endpoint.description}</span>
         )}
         <div className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-lg transition-colors ${
@@ -60,7 +60,7 @@ export default function EndpointRow({ endpoint, onAskAI, token }) {
             </div>
           </div>
 
-          {endpoint.description && endpoint.description !== 'No description provided.' && (
+          {endpoint.description && (
             <p className="mt-3 text-slate-400 text-xs leading-relaxed bg-white/3 rounded-lg px-3 py-2 border border-white/5">
               {endpoint.description}
             </p>

@@ -30,7 +30,8 @@ public class AgenticDocsMvcConfigurer implements WebMvcConfigurer {
                 .addPathPatterns("/apiscope/api/**")
                 .excludePathPatterns(
                         "/apiscope/api/endpoints",
-                        "/apiscope/api/endpoint-metrics"
+                        "/apiscope/api/endpoint-metrics",
+                        "/apiscope/api/admin/reindex"
                 );
     }
 

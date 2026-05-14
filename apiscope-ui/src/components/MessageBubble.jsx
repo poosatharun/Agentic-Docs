@@ -21,9 +21,8 @@ function CopyButton({ text }) {
 }
 
 function MarkdownCode({ node, children, ...props }) {
-  const isInline = node?.position?.start?.line === node?.position?.end?.line
-    && !String(children).includes('\n')
-  const codeStr = String(children)
+  const codeStr  = String(children)
+  const isInline = !codeStr.includes('\n')
   if (isInline) {
     return (
       <code className="bg-[#0f1117] text-violet-300 px-1.5 py-0.5 rounded-md text-xs font-mono border border-white/8" {...props}>
@@ -60,7 +59,7 @@ const MD_COMPONENTS = {
   blockquote: ({ children }) => <blockquote className="border-l-2 border-violet-500/50 pl-3 text-slate-400 italic my-2">{children}</blockquote>,
 }
 
-export default function MessageBubble({ msg, index }) {
+export default function MessageBubble({ msg }) {
   const isUser = msg.role === 'user'
   const time   = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

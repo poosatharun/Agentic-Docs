@@ -20,20 +20,15 @@ export function useChat() {
   }, [])
 
   const sendMessage = useCallback((question) => {
-    // Abort any previous in-flight stream
     abortRef.current?.()
 
-    const now = new Date().toISOString()
-    // Add the user message immediately
-    setMessages((prev) => [...prev, { role: 'user', content: question, timestamp: now }])
+    setMessages((prev) => [...prev, { role: 'user', content: question, timestamp: new Date().toISOString() }])
     setLoading(true)
-
-    // Insert a blank assistant placeholder that we'll fill token-by-token
-    setMessages((prev) => [...prev, { role: 'assistant', content: '', timestamp: now }])
+    setMessages((prev) => [...prev, { role: 'assistant', content: '', timestamp: new Date().toISOString() }])
 
     const abort = sendChatMessageStream(
       question,
-      // onToken — append each token to the last (assistant) message
+      // onToken
       (token) => {
         setMessages((prev) => {
           const updated = [...prev]

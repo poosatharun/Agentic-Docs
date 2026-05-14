@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   Workflow, Play, RotateCcw, AlertCircle,
   CheckCircle2, XCircle, Loader2, Copy, Check,
-  ChevronDown, Layers, Search,
+  ChevronDown, Layers, Search, KeyRound,
 } from 'lucide-react'
 import FlowStepCard    from './FlowStepCard'
 import MethodBadge     from './MethodBadge'
@@ -37,6 +37,14 @@ export default function FlowTracer() {
   const [queryParams,    setQueryParams]     = useState({})
   const [body,           setBody]            = useState('')
   const [endpointSearch, setEndpointSearch] = useState('')
+  const [token,          setToken]           = useState(() => localStorage.getItem('apiscope_bearer_token') ?? '')
+  const [showToken,      setShowToken]       = useState(false)
+
+  const handleTokenChange = (val) => {
+    setToken(val)
+    if (val) localStorage.setItem('apiscope_bearer_token', val)
+    else     localStorage.removeItem('apiscope_bearer_token')
+  }
 
   // Derive the selected endpoint object
   const selectedEndpoint = useMemo(
@@ -147,6 +155,36 @@ export default function FlowTracer() {
           </div>
 
           <div className="p-4 flex flex-col gap-4">
+            {/* Bearer token */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowToken((v) => !v)}
+                title={token ? 'Bearer token set' : 'Set Bearer token for secured endpoints'}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all duration-150 ${
+                  token
+                    ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                    : 'border-white/10 text-slate-500 hover:text-white hover:border-white/20'
+                }`}
+              >
+                <KeyRound size={11} />
+                {token ? 'Token set' : 'Bearer token'}
+              </button>
+              {showToken && (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="password"
+                    value={token}
+                    onChange={(e) => handleTokenChange(e.target.value)}
+                    placeholder="Paste JWT / Bearer token — stored in localStorage"
+                    className="flex-1 bg-[#1a1d2e] border border-white/8 rounded-lg px-3 py-1.5 text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  />
+                  {token && (
+                    <button onClick={() => handleTokenChange('')} className="text-slate-600 hover:text-red-400 text-xs transition-colors" title="Clear token">✕</button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Endpoint selector */}
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Endpoint</p>
