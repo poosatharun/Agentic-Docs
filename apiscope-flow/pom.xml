@@ -14,6 +14,10 @@
     <artifactId>apiscope-flow</artifactId>
     <packaging>jar</packaging>
     <name>APIScope Flow</name>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
     <description>
         Real-time API execution flow visualizer for Agentic Docs.
         Uses Spring AOP to intercept method calls and SSE to stream live trace events to the UI.
