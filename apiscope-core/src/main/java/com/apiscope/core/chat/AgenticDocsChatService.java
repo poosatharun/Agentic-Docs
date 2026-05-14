@@ -7,6 +7,7 @@ import com.apiscope.core.port.LlmPort;
 import com.apiscope.core.port.VectorStorePort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -72,16 +73,16 @@ public class AgenticDocsChatService implements ChatPort {
 
     private static final int MAX_QUESTION_LENGTH = 800;
 
-    private final VectorStorePort vectorStorePort;
+    private final ObjectProvider<VectorStorePort> vectorStorePortProvider;
     private final LlmPort llmPort;
     private final AgenticDocsProperties properties;
 
-    public AgenticDocsChatService(VectorStorePort vectorStorePort,
+    public AgenticDocsChatService(ObjectProvider<VectorStorePort> vectorStorePortProvider,
                                    LlmPort llmPort,
                                    AgenticDocsProperties properties) {
-        this.vectorStorePort = vectorStorePort;
-        this.llmPort         = llmPort;
-        this.properties      = properties;
+        this.vectorStorePortProvider = vectorStorePortProvider;
+        this.llmPort                 = llmPort;
+        this.properties              = properties;
     }
 
     @Override
@@ -105,7 +106,10 @@ public class AgenticDocsChatService implements ChatPort {
     }
 
     private RagContext buildRagContext(String question) {
-        List<String> chunks = vectorStorePort.findRelevantContext(question, properties.topK());
+        VectorStorePort vectorStorePort = vectorStorePortProvider.getIfAvailable();
+        List<String> chunks = (vectorStorePort != null)
+                ? vectorStorePort.findRelevantContext(question, properties.topK())
+                : List.of();
         log.debug("[APIScope] Retrieved {} context chunks.", chunks.size());
         String context = String.join("\n---\n", chunks);
         String systemPrompt = (properties.systemPrompt() != null && !properties.systemPrompt().isBlank())
