@@ -31,7 +31,8 @@ class ApiEndpointMetadataTest {
                 "createUser",   // methodName
                 "Create a new user account", // description
                 List.of("userId"),            // pathParams
-                List.of("page", "size"),       // queryParams
+                List.of("page", "size"),       // requiredQueryParams
+                List.of(),                     // optionalQueryParams
                 "CreateUserRequest",           // requestBodyType
                 "UserResponse"                 // responseType
         );
@@ -43,7 +44,7 @@ class ApiEndpointMetadataTest {
         assertThat(meta.methodName()).isEqualTo("createUser");
         assertThat(meta.description()).isEqualTo("Create a new user account");
         assertThat(meta.pathParams()).containsExactly("userId");
-        assertThat(meta.queryParams()).containsExactly("page", "size");
+        assertThat(meta.requiredQueryParams()).containsExactly("page", "size");
         assertThat(meta.requestBodyType()).isEqualTo("CreateUserRequest");
         assertThat(meta.responseType()).isEqualTo("UserResponse");
     }
@@ -54,7 +55,7 @@ class ApiEndpointMetadataTest {
         // GIVEN: an endpoint metadata object
         ApiEndpointMetadata meta = new ApiEndpointMetadata(
                 "/api/payments", "DELETE", "PaymentController", "cancelPayment", "Cancel a payment",
-                List.of(), List.of(), null, "void"
+                List.of(), List.of(), List.of(), null, "void"
         );
 
         // WHEN: we generate the LLM-readable text
@@ -75,7 +76,7 @@ class ApiEndpointMetadataTest {
         // GIVEN: a GET endpoint
         ApiEndpointMetadata meta = new ApiEndpointMetadata(
                 "/api/orders", "GET", "OrderController", "listOrders", "List all orders",
-                List.of(), List.of(), null, "List"
+                List.of(), List.of(), List.of(), null, "List"
         );
 
         // WHEN
@@ -91,8 +92,8 @@ class ApiEndpointMetadataTest {
     @DisplayName("two records with the same values are equal")
     void twoIdenticalRecords_areEqual() {
         // Java records automatically generate equals() based on all fields.
-        ApiEndpointMetadata a = new ApiEndpointMetadata("/x", "GET", "C", "m", "desc", List.of(), List.of(), null, null);
-        ApiEndpointMetadata b = new ApiEndpointMetadata("/x", "GET", "C", "m", "desc", List.of(), List.of(), null, null);
+        ApiEndpointMetadata a = new ApiEndpointMetadata("/x", "GET", "C", "m", "desc", List.of(), List.of(), List.of(), null, null);
+        ApiEndpointMetadata b = new ApiEndpointMetadata("/x", "GET", "C", "m", "desc", List.of(), List.of(), List.of(), null, null);
 
         assertThat(a).isEqualTo(b);
     }
