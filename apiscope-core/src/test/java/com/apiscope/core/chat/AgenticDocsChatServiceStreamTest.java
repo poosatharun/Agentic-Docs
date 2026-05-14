@@ -10,13 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AgenticDocsChatServiceStreamTest {
@@ -34,7 +35,10 @@ class AgenticDocsChatServiceStreamTest {
                 new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173"))
         );
-        service = new AgenticDocsChatService(vectorStorePort, llmPort, props);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<VectorStorePort> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(vectorStorePort);
+        service = new AgenticDocsChatService(provider, llmPort, props);
     }
 
     @Test

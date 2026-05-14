@@ -10,10 +10,17 @@ const TRACE_URL   = (id) => `${BASE}/apiscope/api/flow/trace/${id}`
  * @returns {Promise<{ traceId: string }>}
  */
 export async function executeFlow(request) {
+  const token = localStorage.getItem('apiscope_bearer_token')
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`
+
   const res = await fetch(EXECUTE_URL, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(request),
+    headers,
+    body:    JSON.stringify({
+      ...request,
+      authorizationHeader: token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : null,
+    }),
   })
   if (!res.ok) {
     const text = await res.text()
@@ -53,8 +60,10 @@ export function subscribeToTrace(traceId, onStep, onDone, onError) {
     es.close()
   })
 
-  // Fallback: native onerror fires on network failure
+  // onerror fires on network failure (readyState goes to CLOSED)
+  // Only handle it when the stream was not already closed by a named error event
   es.onerror = () => {
+    if (es.readyState === EventSource.CLOSED) return
     onError('Lost connection to the backend.')
     es.close()
   }

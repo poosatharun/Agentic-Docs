@@ -54,7 +54,7 @@ export default function AiChat({ pendingQuestion, onPendingConsumed }) {
           <SuggestionChips onSelect={sendMessage} />
         ) : (
           <div className="max-w-3xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
-            {messages.map((msg, i) => <MessageBubble key={`${msg.role}-${msg.timestamp}-${i}`} msg={msg} index={i} />)}
+            {messages.map((msg, i) => <MessageBubble key={`${msg.role}-${msg.timestamp}-${i}`} msg={msg} />)}
             {waitingForFirstToken && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>

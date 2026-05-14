@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.List;
 
@@ -24,17 +25,21 @@ class ApiDocumentIngestorTest {
     @Mock
     private VectorStore vectorStore;
 
+    @Mock
+    private ObjectProvider<VectorStore> vectorStoreProvider;
+
     private ApiDocumentIngestor ingestor;
 
     @BeforeEach
     void setUp() {
+        when(vectorStoreProvider.getIfAvailable()).thenReturn(vectorStore);
         AgenticDocsProperties props = new AgenticDocsProperties(
                 true, 5, null,
                 "./nonexistent-test-store-XXXXXX.json",
                 new AgenticDocsProperties.RateLimit(true, 20),
                 new AgenticDocsProperties.Cors(List.of("http://localhost:5173"))
         );
-        ingestor = new ApiDocumentIngestor(vectorStore, props);
+        ingestor = new ApiDocumentIngestor(vectorStoreProvider, props);
     }
 
     private ApiScanCompletedEvent eventWith(List<ApiEndpointMetadata> endpoints) {

@@ -1,5 +1,6 @@
 package com.apiscope.core.chat;
 
+import com.apiscope.core.ingestor.ApiDocumentIngestor;
 import com.apiscope.core.model.ChatRequest;
 import com.apiscope.core.model.ChatResponse;
 import com.apiscope.core.scanner.ApiEndpointMetadata;
@@ -24,16 +25,27 @@ public class AgenticDocsChatController {
 
     private final EndpointRepository endpointRepository;
     private final ChatPort chatPort;
+    private final ApiDocumentIngestor ingestor;
 
     public AgenticDocsChatController(EndpointRepository endpointRepository,
-                                     ChatPort chatPort) {
+                                     ChatPort chatPort,
+                                     ApiDocumentIngestor ingestor) {
         this.endpointRepository = endpointRepository;
         this.chatPort           = chatPort;
+        this.ingestor           = ingestor;
     }
 
     @GetMapping("/endpoints")
     public ResponseEntity<List<ApiEndpointMetadata>> listEndpoints() {
         return ResponseEntity.ok(endpointRepository.getScannedEndpoints());
+    }
+
+    /** Forces a full re-scan and re-ingest of all endpoints into the vector store. */
+    @PostMapping("/admin/reindex")
+    public ResponseEntity<Void> reindex() {
+        log.info("[APIScope] Manual reindex triggered.");
+        ingestor.reindex(endpointRepository.getScannedEndpoints());
+        return ResponseEntity.accepted().build();
     }
 
     @PostMapping("/chat")
