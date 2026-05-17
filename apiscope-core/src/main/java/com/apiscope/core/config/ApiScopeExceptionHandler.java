@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * Converts validation errors into clean JSON 400 responses.
  */
 @RestControllerAdvice(basePackages = "com.apiscope")
-public class GlobalExceptionHandler {
+public class ApiScopeExceptionHandler {
 
     /** Handles @Validated failures on @RequestBody (e.g. blank question in ChatRequest). */
     @ExceptionHandler(MethodArgumentNotValidException.class)
