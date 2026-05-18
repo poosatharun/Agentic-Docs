@@ -13,47 +13,49 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
 
-/**
- * Provides a file-backed {@link SimpleVectorStore} when no other {@link VectorStore} is present.
- * Loads saved embeddings from disk on startup and saves them back on shutdown.
- * Configure the path via {@code apiscope.vector-store-path}.
- */
-@Configuration
+// proxyBeanMethods=false prevents CGLIB from subclassing this config class.
+// Without it, Spring tries to proxy the class at startup and fails with
+// NoClassDefFoundError when SimpleVectorStore is not on the classpath.
+@Configuration(proxyBeanMethods = false)
 public class VectorStoreConfig {
 
     private static final Logger log = LoggerFactory.getLogger(VectorStoreConfig.class);
 
     private final AgenticDocsProperties properties;
+    // kept as a field so @PreDestroy can save it on shutdown
     private SimpleVectorStore store;
 
     public VectorStoreConfig(AgenticDocsProperties properties) {
         this.properties = properties;
     }
 
+    // Only created when an EmbeddingModel bean exists (i.e. Ollama/OpenAI is configured)
+    // and no other VectorStore has been provided by the host app.
     @Bean
     @ConditionalOnBean(EmbeddingModel.class)
     @ConditionalOnMissingBean(VectorStore.class)
-    public SimpleVectorStore vectorStore(EmbeddingModel embeddingModel) {
+    public VectorStore vectorStore(EmbeddingModel embeddingModel) {
         store = SimpleVectorStore.builder(embeddingModel).build();
-        File storeFile = new File(properties.vectorStorePath());
-        if (storeFile.exists()) {
-            store.load(storeFile);
-            log.info("[APIScope] Vector store loaded from disk: {}", storeFile.getAbsolutePath());
+        File file = new File(properties.vectorStorePath());
+        if (file.exists()) {
+            store.load(file);
+            log.info("[APIScope] Vector store loaded from {}", file.getAbsolutePath());
         } else {
-            log.info("[APIScope] No vector store file at '{}' — will ingest on first startup.", storeFile.getAbsolutePath());
+            log.info("[APIScope] No vector store at '{}' — will ingest on startup.", file.getAbsolutePath());
         }
         return store;
     }
 
+    // Persists embeddings to disk so the next startup skips re-ingestion.
     @PreDestroy
     public void saveOnShutdown() {
         if (store == null) return;
-        File storeFile = new File(properties.vectorStorePath());
+        File file = new File(properties.vectorStorePath());
         try {
-            store.save(storeFile);
-            log.info("[APIScope] Vector store saved to disk: {}", storeFile.getAbsolutePath());
+            store.save(file);
+            log.info("[APIScope] Vector store saved to {}", file.getAbsolutePath());
         } catch (Exception ex) {
-            log.warn("[APIScope] Could not save vector store to disk: {}", ex.getMessage());
+            log.warn("[APIScope] Could not save vector store: {}", ex.getMessage());
         }
     }
 }
